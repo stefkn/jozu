@@ -33,7 +33,7 @@ gem "tzinfo-data", platforms: %i[ windows jruby ]
 
 # Rails 8.1's ActiveSupport::JSON passes a positional options hash to
 # JSON.parse; json >= 3.0 requires keyword args. Pin to the 2.x line.
-gem "json", "~> 2.7"
+gem "json", "~> 3.0"
 
 # Use the database-backed adapters for Rails.cache (SolidQueue for Plan B ingestion)
 gem "solid_cache"
