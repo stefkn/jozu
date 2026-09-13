@@ -1,0 +1,26 @@
+@import "tailwindcss";
+
+/* App-like feel: disable double-tap zoom (keeps pinch-zoom) and prevent
+   accidental text selection during rapid taps. */
+html {
+  touch-action: manipulation;
+  -webkit-text-size-adjust: 100%;
+}
+
+/* Large kanji prompts — keep characters from jumping between lines */
+.kanji-prompt {
+  font-feature-settings: "palt";
+  letter-spacing: 0.02em;
+}
+
+/* Touch-friendly buttons: no tap-highlight flash */
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+button {
+  -webkit-user-select: none;
+  user-select: none;
+}

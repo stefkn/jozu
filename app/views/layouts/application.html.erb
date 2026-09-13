@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <title><%= content_for(:title) || "Jozu" %></title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="application-name" content="Jozu">
+    <meta name="mobile-web-app-capable" content="yes">
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+
+    <%= yield :head %>
+
+    <%# Enable PWA manifest for installable apps (make sure to enable in config/routes.rb too!) %>
+    <%= tag.link rel: "manifest", href: pwa_manifest_path(format: :json) %>
+
+    <link rel="icon" href="/icon.png" type="image/png">
+    <link rel="icon" href="/icon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="/icon.png">
+
+    <%# Tailwind compiled to app/assets/builds/tailwind.css (see app/assets/tailwind/application.css) %>
+    <%= stylesheet_link_tag "tailwind", "data-turbo-track": "reload" %>
+    <%= javascript_importmap_tags %>
+  </head>
+
+  <body class="bg-zinc-50 text-zinc-900 antialiased">
+    <nav class="border-b border-zinc-200 bg-white">
+      <div class="mx-auto max-w-2xl px-4 py-3 flex items-center justify-between">
+        <%= link_to "Jozu", root_path, class: "text-lg font-bold tracking-tight px-1 py-1" %>
+        <div class="flex items-center gap-1 text-sm">
+          <%= link_to "Today", root_path, class: "rounded-lg px-3 py-2 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900" %>
+          <%= link_to "Progress", progress_path, class: "rounded-lg px-3 py-2 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900" %>
+        </div>
+      </div>
+    </nav>
+
+    <main class="mx-auto max-w-2xl px-4 py-6 pb-12">
+      <%= yield %>
+    </main>
+  </body>
+</html>
