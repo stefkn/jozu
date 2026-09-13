@@ -1,0 +1,6 @@
+<% content_for :title, "Diagnostic — Jozu" %>
+<% if @flashcard %>
+  <%= render partial: "diagnostic/flashcard", locals: { flashcard: @flashcard } %>
+<% else %>
+  <%= render partial: "diagnostic/done" %>
+<% end %>
