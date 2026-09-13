@@ -136,6 +136,36 @@ If the Tailscale IP changes, update that file (or set `DEV_ALLOWED_HOST`).
 - Plan B work: real auth, SolidQueue ingestion, Sudachi/mecab, FSRS parameter
   optimization, passive-exposure weighting, reading stream, offline quiz queue.
 
+### Recommended next steps (savepoint 2026-09)
+
+Priority order for finishing the MVP:
+
+1. **Build the real data bank (complete M1).** The app currently runs on the tiny
+   seeded corpus (107 kanji / 111 words / 192 sentences). The whole product is the
+   learning loop on real content, so this is the biggest lever:
+   - Vendor the unified `jkindrix/japanese-language-data` build into `vendor/data/`
+     (or raw JMdict + KANJIDIC2 for the looser EDRDG license) and convert it to the
+     importer's TSV/JSONL shapes (`lib/imports/corpus_importer.rb` documents them).
+   - Run `jozu:import` → top ~500 kanji, ~4k words.
+   - Run `jozu:generate_sentences` with an API key (~5–8k generations, a few
+     dollars) then the §4.3 validation / naturalness pass, and import.
+   - Spot-check sentence quality and `sentence_to_kanji` coverage.
+   - Decisions to make first: data-source licensing posture, and the LLM model /
+     budget for sentence generation.
+2. **Dogfood daily on a phone.** 2–5 minute sessions for ~2 weeks. Watch for:
+   `sentence_to_kanji` coverage, distractor plausibility, and whether the priority
+   engine surfaces the right kanji. Fix data-quality issues as they surface. This
+   is the real MVP validation.
+3. **Polish that pays off once there is data:**
+   - Verify the PWA actually installs on a phone and the session is comfortable.
+   - Surface lightweight usage stats in the UI (weekly reviews / correct rate);
+     `jozu:stats` exists but is CLI-only.
+   - Performance pass on `SentenceSelector` (per-candidate queries; the ~5–8k
+     sentence bank may need index tuning or batching).
+   - Basic auth, only if someone other than the demo user will use the app.
+4. **Explicitly deferred to Plan B:** reading stream, offline quiz queue,
+   confusion-network distractors, FSRS parameter optimization.
+
 ---
 
 ## 0. Guiding principles
