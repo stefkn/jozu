@@ -1,0 +1,36 @@
+<% content_for :title, "Today — Jozu" %>
+
+<div class="space-y-6">
+  <h1 class="text-2xl font-bold">Today's session</h1>
+
+  <div class="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
+    <dl class="grid grid-cols-3 gap-4 text-center">
+      <div>
+        <dt class="text-3xl font-bold text-zinc-900"><%= @summary.reviews_count %></dt>
+        <dd class="mt-1 text-xs text-zinc-500">reviews</dd>
+      </div>
+      <div>
+        <dt class="text-3xl font-bold text-blue-600"><%= @summary.new_kanji_count %></dt>
+        <dd class="mt-1 text-xs text-zinc-500">new kanji</dd>
+      </div>
+      <div>
+        <dt class="text-3xl font-bold text-zinc-300"><%= @summary.reading_count %></dt>
+        <dd class="mt-1 text-xs text-zinc-500">short reading</dd>
+      </div>
+    </dl>
+
+    <% if @needs_diagnostic %>
+      <%= link_to "Take the diagnostic", diagnostic_path, class: "mt-6 block w-full rounded-xl bg-blue-600 px-4 py-4 text-center text-lg font-semibold text-white shadow-sm transition hover:bg-blue-700 active:bg-blue-800" %>
+      <p class="mt-3 text-center text-xs text-zinc-400">~40 quick questions to estimate what you already know.</p>
+    <% elsif @has_work %>
+      <%= link_to "Start", next_sessions_path, class: "mt-6 block w-full rounded-xl bg-blue-600 px-4 py-4 text-center text-lg font-semibold text-white shadow-sm transition hover:bg-blue-700 active:bg-blue-800" %>
+    <% else %>
+      <p class="mt-6 text-center text-sm text-zinc-500">Nothing due right now. Take a break or check your progress.</p>
+      <%= link_to "View progress", progress_path, class: "mt-3 block w-full rounded-xl border-2 border-zinc-300 bg-white px-4 py-3 text-center text-sm font-semibold text-zinc-700 shadow-sm transition hover:bg-zinc-100 active:bg-zinc-200" %>
+    <% end %>
+  </div>
+
+  <p class="text-center text-xs text-zinc-400">
+    A session takes about 2–5 minutes.
+  </p>
+</div>
