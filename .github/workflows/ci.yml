@@ -102,7 +102,7 @@ jobs:
           DATABASE_URL: postgres://postgres:postgres@localhost:5432
           # RAILS_MASTER_KEY: ${{ secrets.RAILS_MASTER_KEY }}
           # REDIS_URL: redis://localhost:6379/0
-        run: bin/rails db:test:prepare && bundle exec rspec spec/requests spec/services spec/segmentation
+        run: bin/rails tailwindcss:build && bin/rails db:test:prepare && bundle exec rspec spec/requests spec/services spec/segmentation
 
   system-test:
     runs-on: ubuntu-latest
@@ -129,8 +129,11 @@ jobs:
 
       - name: Install Chrome
         run: |
-          sudo apt-get install --no-install-recommends -y chromium-browser || true
-          echo "CHROME_BIN=$(which chromium chromium-browser google-chrome 2>/dev/null | head -1)" >> $GITHUB_ENV
+          wget -qO- https://dl.google.com/linux/linux_signing_key.pub | gpg --dearmor -o /tmp/google-chrome.gpg
+          sudo install -D -o root -g root -m 644 /tmp/google-chrome.gpg /etc/apt/keyrings/google-chrome.gpg
+          echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/google-chrome.gpg] http://dl.google.com/linux/chrome/deb/ stable main" | sudo tee /etc/apt/sources.list.d/google-chrome.list
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y google-chrome-stable
 
       - name: Checkout code
         uses: actions/checkout@v6
@@ -146,7 +149,7 @@ jobs:
           DATABASE_URL: postgres://postgres:postgres@localhost:5432
           # RAILS_MASTER_KEY: ${{ secrets.RAILS_MASTER_KEY }}
           # REDIS_URL: redis://localhost:6379/0
-        run: bin/rails db:test:prepare && bundle exec rspec spec/system
+        run: bin/rails tailwindcss:build && bin/rails db:test:prepare && bundle exec rspec spec/system
 
       - name: Keep screenshots from failed system tests
         uses: actions/upload-artifact@v4
