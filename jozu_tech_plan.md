@@ -1,6 +1,6 @@
 # Jozu — Technical Plan: Plan A (Thin Vertical Slice) + Plan B Extensions
 
-Status: Draft v1 — **Plan A implemented (see "Implementation status" below)**
+Status: Draft v1 — **Plan A implemented; M1 (real data bank) complete (see "Implementation status" below)**
 Based on: `jozu_concept.md`
 
 This plan describes a first-pass MVP ("Plan A") that proves the core learning loop
@@ -12,9 +12,11 @@ in concept section 22 ("Plan B").
 ## Implementation status (for other agents)
 
 Everything in this section is authoritative state as of 2026-09. The Plan A
-vertical slice is implemented end-to-end and green (79 RSpec examples, RuboCop
-clean, Brakeman / bundler-audit / importmap-audit clean). See the table in §15
-for the Plan B delta.
+vertical slice is implemented end-to-end and green (109 RSpec examples, RuboCop
+clean, Brakeman / bundler-audit / importmap-audit clean), and M1 is complete:
+the app runs on a real bank of 253 radicals / 500 kanji / 4,018 words / ~5.5k
+validated sentences instead of the tiny seed corpus. See the table in §15 for
+the Plan B delta.
 
 ### Environment / toolchain (non-obvious)
 
@@ -47,14 +49,18 @@ for the Plan B delta.
   `sentences`, `sentence_words`, `user_kanji`, `user_words`, `reviews`
   (polymorphic, immutable), `exposures`. Note `kanji` / `word_kanji` are the
   actual table names (models override `self.table_name`); all `t.references :kanji`
-  use `foreign_key: { to_table: :kanji }`.
+  use `foreign_key: { to_table: :kanji }`. **Plus `radicals`** (M1): keyed by
+  glyph `character` (unique), `number` = Kangxi classical number (nullable,
+  non-unique — the source has variant glyphs per number); `kanji.radical_id` is a
+  bigint FK. ~497/516 kanji carry a radical.
 - **Domain core (M2)** — `app/services/learning/`: `Config` (all tunables),
   `MasteryCalculator` (per-dimension deltas per §5.2), `Scheduler` (fsrs 0.9.2
   adapter, grade mapping per §6), `PriorityCalculator`, `LeverageCalculator`,
   `ExposureRecorder`. All hot-path services take an injectable `now:`.
 - **Question engine (M3)** — `NextReview`, `QuestionGenerator`, `DistractorSelector`
   (plausible-by-construction pools), `SentenceSelector` (target-kanji-is-the-difficult-part),
-  `Segmentation::LongestMatch` trie in `lib/segmentation`.
+  `Segmentation::LongestMatch` trie in `lib/segmentation`. `QuestionGenerator`
+  resolves the target kanji from either `UserKanji` or `UserWord` reviewables.
 - **Quiz UX (M4)** — home summary, Turbo-frame quiz with a Stimulus controller
   (response-time measurement, feedback, confidence row), POST-driven review flow,
   session-end tally, `question_token` idempotency. `Learning::QuestionStore`
@@ -66,13 +72,40 @@ for the Plan B delta.
 - **Progress (M6)** — `Learning::Progress` + progress view (top-N coverage,
   Known/Learning/Weak/Unknown buckets, words unlocked).
 - **Import pipeline (M1 tooling)** — `lib/imports/corpus_importer.rb`,
-  `lib/generation/validation.rb` (§4.3 gates), `lib/generation/sentence_generator.rb`
-  (LLM → versioned JSONL). Rake tasks in `lib/tasks/jozu.rake`:
-  `jozu:import`, `jozu:generate_sentences`, `jozu:stats`.
+  `lib/imports/reference_converter.rb`, `lib/generation/validation.rb` (§4.3
+  gates), `lib/generation/sentence_generator.rb` (LLM → versioned JSONL),
+  `lib/generation/naturalness.rb` (§4.3 gate 4). Rake tasks in `lib/tasks/jozu.rake`:
+  `jozu:convert_reference`, `jozu:import`, `jozu:generate_sentences`,
+  `jozu:rate_sentences`, `jozu:stats`.
+- **Real data bank (M1 complete)** — vendored `jkindrix/japanese-language-data`
+  (pinned commit `04014e06`, sources in gitignored `vendor/data/sources/`,
+  reproduced via `script/fetch_reference_data.rb`), converted to
+  `vendor/data/{radicals,kanji,words}.tsv` (committed). Live bank: **253
+  radicals / 500 kanji (top-500 by KANJIDIC2 frequency) / 4,018 words (top-4,000
+  by Leeds web-corpus frequency)**. Sentence bank: **5,467 sentences** (5,275
+  LLM-generated + 192 seed), of which **514/516 kanji (99.6%) and 3,885/4,018
+  words (96.7%)** have ≥1 sentence. `jozu:import` is idempotent (run twice,
+  identical counts).
+- **LLM pipeline runs on OpenRouter** — `Generation::Client` (base URL
+  `https://openrouter.ai/api/v1`, attribution headers), `Generation::Response`
+  (retry only transient 5xx/timeout/connection/429; fence-tolerant JSON
+  extraction), `Generation::Naturalness` + `jozu:rate_sentences` (keep ≥3,
+  retry once at higher temperature, resumable, concurrent) writing
+  `vendor/data/generated_sentences.natural.jsonl`; `jozu:import` prefers the
+  natural-filtered file. `SentenceGenerator` is resumable (skips already-generated
+  word×kanji pairs), concurrent (`JOZU_CONCURRENCY`), caps `max_tokens`, and
+  writes a stable `external_id` hash.
 - **Seeds** — `db/seeds.rb`: demo user + tiny curated corpus (107 kanji,
   111 words, 192 sentences, word_kanji + sentence_words linked via longest-match).
+  The curated corpus only seeds when the `kanji` table is empty, so `db:seed`
+  after `jozu:import` never downgrades the real bank (it only creates the demo user).
 - **CI** — `.github/workflows/ci.yml` updated for RSpec; lint + security scans +
-  test + system-test jobs; headless Chrome installed in the system-test job.
+  test + system-test jobs; headless Chrome installed in the system-test job. The
+  `test` job also runs `spec/lib` (generator / naturalness / converters / importers).
+- **SentenceSelector performance** — preloads all candidate-batch context once
+  per select (kanji ranks, known-kanji ids, exposure recency/counts, user-word
+  mastery, eager-loaded `sentence_words`), bringing a select on the ~5.5k-sentence
+  bank from ~700ms to ~22ms. Do not reintroduce per-candidate queries.
 
 ### Decisions / deviations from the plan (read before editing)
 
@@ -108,15 +141,55 @@ for the Plan B delta.
   (Zeitwerk loads the namespace file on any `Learning` reference); `Config` is in
   `config.rb`. Don't move the module methods back into `config.rb` — they were
   never autoloaded from there.
+- **LLM model = `openai/gpt-4.1-mini` for both generation and rating** (M1). A
+  pilot compared it against `anthropic/claude-sonnet-4` and `~openai/gpt-sol-latest`:
+  claude was hard 429-rate-limited on the OpenRouter account (useless at any
+  concurrency); gpt-sol emitted ~147 output tokens per short sentence (reasoning
+  overhead) → ~15× the cost at comparable quality. mini: ~28 out-tokens/sentence,
+  fast, ~$1 for the whole 12k-call bank. Model overrides: `JOZU_LLM_MODEL`
+  (generation), `JOZU_NATURALNESS_MODEL` (rating, defaults to the same).
+- **`max_tokens` is always set** (500 generation / 50 rating). OpenRouter reserves
+  the model's full max output (64k for Claude) when unset and rejects the request
+  with 402 if the balance can't cover it — this is a hard requirement, not a
+  preference. Don't remove it.
+- **Naturalness gate is a separate task, not part of `jozu:import`** (§4.3 gate 4):
+  `jozu:rate_sentences` rates the raw JSONL into `generated_sentences.natural.jsonl`
+  (resumable by content hash, concurrent); `jozu:import` prefers the natural file.
+  This keeps import offline/deterministic and the LLM cost explicit.
+- **Radicals are keyed by glyph `character`, not Kangxi `number`** — the source's
+  `classical_number` is non-unique (variant glyphs share a number) and nullable
+  (11/253). `number` stays as informational data. Kanji → radical mapping uses the
+  source's `radical.classical` number through a deterministic canonical-glyph map
+  (largest associated-kanji list wins per number).
+- **Word frequency source = `frequency-web.json`** (Leeds 253M-token web corpus,
+  CC-BY, integrated by the unified build) — the dataset has no BCCWJ-derived ranks.
+  Top 4,000 words that contain ≥1 in-scope kanji.
+- **Sentence dedupe is an exact kanji-set signature**, applied against both the
+  current batch and already-imported rows (excluding the batch's own external_ids
+  so re-imports stay idempotent). `Validation.duplicate?` (Jaccard >0.8) remains as
+  a review utility. On the real run this rejected 566/5,891 rows — mostly the
+  redundant second sentence for a multi-kanji word.
+- **Vendoring posture:** raw source JSONs are gitignored under `vendor/data/sources/`
+  (reproducible via `script/fetch_reference_data.rb` at pinned SHA); the converted
+  `vendor/data/*.tsv` and the generated `generated_sentences*.jsonl` ARE committed
+  (the bank is the product).
 
 ### Running it
 
 ```sh
-bin/rails db:drop db:create db:migrate db:seed
-bin/dev                                  # recommended: puma + tailwind watch
+bin/rails db:drop db:create db:migrate
+bin/rails jozu:import            # real bank: 253 radicals / 500 kanji / 4,018 words / sentences
+bin/rails db:seed                # demo user (curated corpus only seeds an empty DB)
+bin/dev                          # recommended: puma + tailwind watch
 bin/rails server -b 0.0.0.0 -p 3001      # plain server (rebuild CSS manually first)
 bundle exec rspec && bundle exec rubocop
 ```
+
+Regenerating the LLM sentence bank (only when needed — the committed bank already
+ships): `script/fetch_reference_data.rb`, `bin/rails jozu:convert_reference`,
+`bin/rails jozu:generate_sentences` (needs `OPENROUTER_API_KEY`; resumable,
+`JOZU_CONCURRENCY` for parallelism), `bin/rails jozu:rate_sentences`,
+`bin/rails jozu:import`.
 
 **Mobile access over Tailscale**: the dev server runs on `0.0.0.0:3001`
 (port 3000 is taken by an unrelated node process on this machine). Reachable at
@@ -129,10 +202,19 @@ If the Tailscale IP changes, update that file (or set `DEV_ALLOWED_HOST`).
 
 - Only the 3 Plan A question types exist; `reading_strength` is seeded but not
   drilled (§5.1). No kanji→reading questions yet.
-- `sentence_to_kanji` can run dry when the corpus lacks a valid sentence for a
-  kanji; `NextReview` falls back to the other question type.
-- Importers read documented TSV/JSONL formats but the full `japanese-language-data`
-  bank is **not vendored** — `jozu:import` skips missing files gracefully.
+- The kanji bank is now ~1,958 (top-500 + the difficulty-budget closure over the
+  full vocabulary), so `sentence_to_kanji` coverage is high; the ~35 kanji used
+  by sentences but beyond the rank-2000 budget (凄, 勿, …) stay unbanked, and
+  `NextReview` falls back to the other question type for them.
+- ~67 sentences still have partial stored furigana (LLM + dictionary repair can't
+  cover conjugated verb stems like 飲みません); the runtime per-kanji fallback
+  renders a reading for all of them. Re-run `jozu:generate_furigana` if the
+  prompt/repair improves.
+- ~9 kanji (区, 置, 医, 署, 罰, …) lack a radical link because the vendored
+  radicals source omits classical numbers 23/35/114/122; their readings/stroke
+  are complete and distractor pools fall back to reading/stroke tiers.
+- ~~`PriorityCalculator#top_unseen` scores every unseen kanji (~525ms)~~ **DONE**
+  (batched preloading: ~190ms on the ~1.96k kanji bank, plan §7).
 - Plan B work: real auth, SolidQueue ingestion, Sudachi/mecab, FSRS parameter
   optimization, passive-exposure weighting, reading stream, offline quiz queue.
 
@@ -140,18 +222,15 @@ If the Tailscale IP changes, update that file (or set `DEV_ALLOWED_HOST`).
 
 Priority order for finishing the MVP:
 
-1. **Build the real data bank (complete M1).** The app currently runs on the tiny
-   seeded corpus (107 kanji / 111 words / 192 sentences). The whole product is the
-   learning loop on real content, so this is the biggest lever:
-   - Vendor the unified `jkindrix/japanese-language-data` build into `vendor/data/`
-     (or raw JMdict + KANJIDIC2 for the looser EDRDG license) and convert it to the
-     importer's TSV/JSONL shapes (`lib/imports/corpus_importer.rb` documents them).
-   - Run `jozu:import` → top ~500 kanji, ~4k words.
-   - Run `jozu:generate_sentences` with an API key (~5–8k generations, a few
-     dollars) then the §4.3 validation / naturalness pass, and import.
-   - Spot-check sentence quality and `sentence_to_kanji` coverage.
-   - Decisions to make first: data-source licensing posture, and the LLM model /
-     budget for sentence generation.
+1. ~~Build the real data bank (complete M1).~~ **DONE.** Live bank: 253 radicals /
+   1,958 kanji / 4,018 words / 5,467 sentences (5,275 LLM + 192 seed). The kanji
+   scope is the top-500 by frequency plus the rank-≤2000 closure over the full
+   vocabulary (火, 天, 忘, 笑, …), so every word/sentence kanji within the
+   difficulty budget has readings/radical/stroke. Import idempotent, generation
+   cost ~$1 on `gpt-4.1-mini`. Sentence quality spot-checks pass. One known data
+   wrinkle: high-frequency single-kanji words (手, 出, …) generate sentences that
+   are short and repetitive — revisit if it hurts question variety during
+   dogfooding.
 2. **Dogfood daily on a phone.** 2–5 minute sessions for ~2 weeks. Watch for:
    `sentence_to_kanji` coverage, distractor plausibility, and whether the priority
    engine surfaces the right kanji. Fix data-quality issues as they surface. This
@@ -160,8 +239,8 @@ Priority order for finishing the MVP:
    - Verify the PWA actually installs on a phone and the session is comfortable.
    - Surface lightweight usage stats in the UI (weekly reviews / correct rate);
      `jozu:stats` exists but is CLI-only.
-   - Performance pass on `SentenceSelector` (per-candidate queries; the ~5–8k
-     sentence bank may need index tuning or batching).
+   - ~~Performance pass on `SentenceSelector`~~ **DONE** (context preloading:
+     ~700ms → ~22ms per select on the 5.5k-sentence bank).
    - Basic auth, only if someone other than the demo user will use the app.
 4. **Explicitly deferred to Plan B:** reading stream, offline quiz queue,
    confusion-network distractors, FSRS parameter optimization.
@@ -412,7 +491,7 @@ Plan B reading stream (§15) and slots in without schema changes.
 |---|---|---|---|
 | Kanji metadata + readings + freq | **KANJIDIC2** | EDRDG (free, attribution) | top ~500 by frequency |
 | Vocabulary, readings, meanings | **JMdict** (XML) | EDRDG | ~2,000–4,000 common words |
-| Word frequency | BCCWJ-derived ranks (unified dataset below) | CC BY-SA 4.0 | top ~4,000 |
+| Word frequency | Leeds 253M-token web-corpus ranks (`frequency-web.json`, CC-BY) | CC BY-SA 4.0 | top ~4,000 |
 
 **Recommended shortcut:** use the **`jkindrix/japanese-language-data`** unified build,
 which pre-integrates JMdict + KANJIDIC2 + frequency into one coherent dataset. Fall back
@@ -432,7 +511,8 @@ reading the `sentences` table, and `source: "llm"` distinguishes the rows.
   sentences for high-leverage kanji with no word pair. ≈5–8k generations for Plan A.
 - **Job:** `bin/rails jozu:generate_sentences`
   1. Build generation units (word, target kanji, other-kanji frequency budget).
-  2. Call an OpenAI-compatible chat endpoint (Ruby `ruby-openai` gem) with a strict
+  2. Call an OpenAI-compatible chat endpoint (Ruby `ruby-openai` gem pointed at
+     **OpenRouter** via `Generation::Client`) with a strict
      prompt; each unit returns `{"ja": ..., "en": ...}` JSON.
   3. Append raw results to `vendor/data/generated_sentences.jsonl` with `model`,
      `prompt_version`, `temperature`, `seed`. **The API is called once; the file is the
@@ -465,8 +545,9 @@ Return strict JSON: {"ja": "...", "en": "..."}
 5. **Fallback:** a word with no surviving sentence simply produces no
    `sentence_to_kanji` questions until a valid one is generated.
 
-**Cost:** ≈5–8k generations + naturalness pass ≈ a few dollars at current API pricing —
-negligible vs. the corpus-parsing and licensing effort it replaces.
+**Cost (measured, M1):** the full 6,122-unit generation + 6,122 naturalness ratings on
+`openai/gpt-4.1-mini` ≈ **$1**; a stronger rater (e.g. claude-sonnet-4) would add
+~$3. Negligible vs. the corpus-parsing and licensing effort it replaces.
 
 ### 4.4 Word ↔ sentence linking
 
@@ -807,14 +888,15 @@ Each milestone has an explicit exit criterion.
   GitHub Actions (lint + test).
 - Exit: `bin/rails test` + `bundle exec rspec` green in CI; PWA generator run.
 
-### M1 — Data pipeline + sentence generation (~1–2 wk)
-- Vendor `japanese-language-data` build (or raw sources) for kanji/vocab/frequency;
-  write importers; tiny corpus in `db/seeds.rb`; fixtures.
-- Build `jozu:generate_sentences` (batch LLM generation → versioned JSONL) and the
-  validation gates (§4.3); run the naturalness pass on a sample.
-- Exit: `bin/rails jozu:import` idempotent; counts match expectations; a sample of
-  generated sentences passes manual QA; segmentation spot-checks look sane;
-  `ATTRIBUTION.md` written.
+### M1 — Data pipeline + sentence generation (~1–2 wk) — **DONE (2026-09)**
+- Vendored `japanese-language-data` build (pinned SHA) → `script/fetch_reference_data.rb`
+  + `Imports::ReferenceConverter` → committed TSVs; radicals table; importers; tiny
+  corpus in `db/seeds.rb`; fixtures.
+- `jozu:generate_sentences` (batch LLM → versioned JSONL, OpenRouter) + validation
+  gates (§4.3) + `jozu:rate_sentences` naturalness pass, run on the full bank.
+- Exit (all met): `jozu:import` idempotent; counts match (253/500/4,018/5,467);
+  sentence sample passes manual QA; segmentation spot-checks sane; `ATTRIBUTION.md`
+  written. Cost ~$1 on `gpt-4.1-mini`.
 
 ### M2 — Domain core (~1 wk)
 - `MasteryCalculator`, `Scheduler` (fsrs adapter), `PriorityCalculator`,
@@ -870,10 +952,16 @@ Each milestone has an explicit exit criterion.
 | Algorithm parameters feel arbitrary | All constants in a config object / `now:` injection; unit-tested so tuning is safe |
 
 ### Decisions to confirm before M1
-1. Unified dataset vs. raw sources (licensing posture).
-2. Frequency source of truth (the dataset's BCCWJ-derived ranks vs. KANJIDIC2).
+
+**Resolved (M1):** unified `jkindrix/japanese-language-data` build (pinned SHA,
+CC BY-SA 4.0); frequency source = KANJIDIC2 ranks for kanji + Leeds web-corpus
+ranks for words (the dataset has no BCCWJ ranks); PWA ships as a nice-to-have.
+
+1. ~~Unified dataset vs. raw sources (licensing posture).~~ → unified build, vendored.
+2. ~~Frequency source of truth (the dataset's BCCWJ-derived ranks vs. KANJIDIC2).~~
+   → KANJIDIC2 (kanji) + Leeds web corpus (words).
 3. Whether Plan A ships an installable PWA at all (nice-to-have vs. required for the
-   phone-based 2–5 min sessions).
+   phone-based 2–5 min sessions) — **still open; PWA generated but not phone-tested.**
 
 ---
 

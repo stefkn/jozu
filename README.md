@@ -14,7 +14,9 @@ Requires Ruby 4.0+ and PostgreSQL.
 
 ```sh
 bundle install
-bin/rails db:create db:migrate db:seed   # seeds a demo user + tiny curated corpus
+bin/rails db:create db:migrate
+bin/rails jozu:import          # import the vendored reference bank (kanji/words/radicals)
+bin/rails db:seed              # demo user (curated corpus only seeds an empty DB)
 bin/rails server
 ```
 
@@ -23,12 +25,35 @@ to estimate what you already know, then presents daily quiz sessions.
 
 ## Data pipeline
 
-- `bin/rails jozu:import` — idempotent import of `vendor/data/kanji.tsv`,
-  `vendor/data/words.tsv`, and `vendor/data/generated_sentences.jsonl` (see
-  `lib/imports/corpus_importer.rb` for the expected row formats).
-- `bin/rails jozu:generate_sentences` — batch LLM sentence generation into
-  `vendor/data/generated_sentences.jsonl` (requires `OPENAI_API_KEY`).
-- `bin/rails jozu:stats` — session/review sanity counts.
+The reference bank (top-500 kanji, ~4k words, 253 radicals) is derived from the
+`jkindrix/japanese-language-data` unified build (CC BY-SA 4.0) and shipped as
+`vendor/data/*.tsv`.
+
+```sh
+script/fetch_reference_data.rb      # (re)download pinned sources -> vendor/data/sources/
+bin/rails jozu:convert_reference    # sources -> vendor/data/{radicals,kanji,words}.tsv
+bin/rails jozu:import               # idempotent TSV + sentence import
+bin/rails jozu:generate_sentences   # LLM sentence generation -> generated_sentences.jsonl
+bin/rails jozu:rate_sentences       # naturalness gate -> generated_sentences.natural.jsonl
+bin/rails jozu:stats                # sanity counts
+```
+
+LLM steps use OpenRouter (`ruby-openai` with `uri_base` pointed at
+`https://openrouter.ai/api/v1`). Env vars:
+
+| Var | Default | Purpose |
+|---|---|---|
+| `OPENROUTER_API_KEY` | — | required for generation/rating |
+| `JOZU_LLM_MODEL` | `anthropic/claude-sonnet-4` | generation model slug |
+| `JOZU_NATURALNESS_MODEL` | `JOZU_LLM_MODEL` | rating-pass model slug (e.g. a stronger model) |
+| `JOZU_LLM_BASE_URL` | OpenRouter `/api/v1` | provider override |
+| `JOZU_CONCURRENCY` | `1` | parallel in-flight requests |
+| `LIMIT` | — | cap `jozu:generate_sentences` units |
+
+Generation is resumable (skips already-generated word×kanji pairs) and the raw
+JSONL is the source of truth; `jozu:import` prefers the naturalness-filtered file.
+`jozu:generate_sentences` also supports `json_mode`/`send_seed` via
+`Generation::SentenceGenerator` kwargs for providers that accept them.
 
 Reference data licensing is documented in `ATTRIBUTION.md`.
 
