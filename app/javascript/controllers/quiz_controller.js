@@ -18,9 +18,11 @@ export default class extends Controller {
     this.optionTargets.forEach((option) => {
       option.disabled = true
       if (option.dataset.correct === "true") {
-        option.classList.add("border-green-500", "bg-green-50")
+        option.style.borderColor = "var(--color-green-500)"
+        option.style.backgroundColor = "var(--color-green-50)"
       } else if (option === selected) {
-        option.classList.add("border-red-500", "bg-red-50")
+        option.style.borderColor = "var(--color-red-500)"
+        option.style.backgroundColor = "var(--color-red-50)"
       } else {
         option.classList.add("opacity-40")
       }
