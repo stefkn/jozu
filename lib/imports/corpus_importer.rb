@@ -4,8 +4,21 @@ module Imports
   class CorpusImporter
     BATCH_SIZE = 500
 
+    # rows: [{ character:, number:, name:, stroke_count: }]
+    def import_radicals!(rows)
+      rows.each_slice(BATCH_SIZE) do |batch|
+        ActiveRecord::Base.transaction do
+          batch.each do |row|
+            radical = Radical.find_or_initialize_by(character: row[:character])
+            radical.update!(number: row[:number], name: row[:name], stroke_count: row[:stroke_count])
+          end
+        end
+      end
+      Radical.count
+    end
+
     # rows: [{ character:, grade:, frequency_rank:, stroke_count:, meaning:,
-    #          onyomi: [], kunyomi: [] }]
+    #          onyomi: [], kunyomi: [], radical: }]
     def import_kanji!(rows)
       rows.each_slice(BATCH_SIZE) do |batch|
         ActiveRecord::Base.transaction do
@@ -15,7 +28,8 @@ module Imports
               grade: row[:grade],
               frequency_rank: row[:frequency_rank],
               stroke_count: row[:stroke_count],
-              meaning_summary: row[:meaning]
+              meaning_summary: row[:meaning],
+              radical: Radical.find_by(character: row[:radical])
             )
             insert_readings(kanji, row[:onyomi] || [], "onyomi")
             insert_readings(kanji, row[:kunyomi] || [], "kunyomi")
@@ -45,10 +59,21 @@ module Imports
       Word.count
     end
 
-    # rows: [{ japanese:, translation:, source:, external_id:, generation_version:, difficulty: }]
-    # Sentences are validated and segmented before insert.
+    # rows: [{ japanese:, translation:, source:, external_id:, generation_version:, difficulty:, target_word: }]
+    # Sentences are validated and segmented before insert. Validator and rank map
+    # are shared across the batch so validation does not query per character.
     def import_sentences!(rows, importer: nil, validator: Generation::Validation)
       segmenter = Segmentation::LongestMatch.build(Word.pluck(:surface))
+      kanji_ranks = Kanji.pluck(:character, :frequency_rank).to_h
+
+      external_ids = rows.filter_map { |r| r[:external_id] }
+      # Re-imports of an existing external_id are idempotent no-ops, not
+      # duplicates. A new row is a duplicate only if it repeats the kanji set of
+      # an already-imported sentence that is not being re-imported in this batch.
+      existing_ids = Sentence.where(external_id: external_ids).pluck(:external_id).to_h { |id| [ id, true ] }
+      seen_signatures = Sentence.where.not(external_id: external_ids)
+                                .pluck(:japanese)
+                                .to_h { |ja| [ kanji_signature(ja), true ] }
       stats = { imported: 0, rejected: 0 }
       rows.each_slice(BATCH_SIZE) do |batch|
         ActiveRecord::Base.transaction do
@@ -57,19 +82,25 @@ module Imports
               sentence: row[:japanese],
               target_word: row[:target_word],
               en: row[:translation],
-              segmenter:
+              segmenter:,
+              kanji_ranks:
             )
+            signature = kanji_signature(row[:japanese])
+            if result.valid && !existing_ids.key?(row[:external_id]) && seen_signatures.key?(signature)
+              result = Generation::Validation::Result.new(valid: false, reasons: [ "duplicate kanji set" ])
+            end
             unless result.valid
               stats[:rejected] += 1
               warn "Rejected sentence #{row[:external_id]}: #{result.reasons.join(', ')}"
               next
             end
+            seen_signatures[signature] = true
 
             sentence = Sentence.find_or_initialize_by(external_id: row[:external_id])
             sentence.update!(
               japanese: row[:japanese],
               translation: row[:translation],
-              difficulty: row[:difficulty] || estimate_difficulty(row[:japanese]),
+              difficulty: row[:difficulty] || estimate_difficulty(row[:japanese], kanji_ranks),
               source: row[:source],
               generation_version: row[:generation_version]
             )
@@ -113,9 +144,9 @@ module Imports
     end
 
     # Baseline difficulty from the kanji frequency profile (plan §8.4).
-    def estimate_difficulty(japanese)
+    def estimate_difficulty(japanese, kanji_ranks = nil)
       ranks = Generation::Validation.kanji_chars(japanese).filter_map do |char|
-        Kanji.find_by(character: char)&.frequency_rank
+        kanji_ranks ? kanji_ranks[char] : Kanji.find_by(character: char)&.frequency_rank
       end
       return 3 if ranks.empty?
 
@@ -127,6 +158,10 @@ module Imports
       when 800...1500 then 4
       else 5
       end
+    end
+
+    def kanji_signature(japanese)
+      Generation::Validation.kanji_chars(japanese).uniq.sort.join
     end
   end
 end
