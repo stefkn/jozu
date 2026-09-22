@@ -14,8 +14,8 @@ module Learning
 
     Result = Data.define(:grade, :previous_interval, :new_interval, :due_at)
 
-    def self.grade_for(correct:, confidence:, response_time_ms:, config: Learning.config)
-      new(config:).grade_for(correct:, confidence:, response_time_ms:)
+    def self.grade_for(correct:, confidence:, response_time_ms:, question_type: nil, config: Learning.config)
+      new(config:).grade_for(correct:, confidence:, response_time_ms:, question_type:)
     end
 
     def initialize(config: Learning.config)
@@ -24,9 +24,11 @@ module Learning
     end
 
     # Map the raw outcome + confidence + response time to an FSRS rating (plan §6).
-    def grade_for(correct:, confidence:, response_time_ms:)
+    # The slow threshold is question-type-aware: sentence questions need the time
+    # to read the sentence, so they are not penalised at the single-kanji threshold.
+    def grade_for(correct:, confidence:, response_time_ms:, question_type: nil)
       return :again if !correct || confidence == "unknown"
-      return :hard if confidence == "guessed" || @config.slow?(response_time_ms)
+      return :hard if confidence == "guessed" || @config.slow?(response_time_ms, question_type:)
       return :easy if confidence == "instant" && @config.fast?(response_time_ms)
 
       :good
