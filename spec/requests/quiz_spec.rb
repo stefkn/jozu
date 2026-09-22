@@ -99,8 +99,32 @@ RSpec.describe "Quiz flow", type: :request do
     expect(review.grade).to eq("again")
   end
 
+  it "records a sentence exposure when answering a sentence_to_kanji question" do
+    uk = UserKanji.create!(user:, kanji: k["決"], times_seen: 1, context_strength: 0.0, recognition_strength: 0.6)
+    question = Learning::QuestionGenerator.new.generate(user, uk, question_type: "sentence_to_kanji")
+    expect(question.sentence_id).not_to be_nil
+    Learning::QuestionStore.put(question)
+
+    expect do
+      post reviews_path, params: {
+        question_token: question.token,
+        reviewable_type: question.reviewable_type,
+        reviewable_id: question.reviewable_id,
+        answer_id: question.correct_option_id,
+        confidence: "knew",
+        response_time_ms: "900"
+      }, as: :turbo_stream
+    end.to change { Exposure.where(user:, kind: "sentence").count }.by(1)
+
+    expect(Exposure.where(user:, kind: "sentence").last.sentence_id).to eq(question.sentence_id)
+  end
+
   it "serves the session-complete card when the session ends" do
-    3.times { Learning::NextReview.call(user) }
+    scheduler = Learning::Scheduler.new
+    %w[決 必 要].each do |char|
+      uk = UserKanji.create!(user:, kanji: k[char])
+      scheduler.apply!(uk, grade: :good, now: Time.current)
+    end
     get next_sessions_path
     expect(response.body).to include("Session complete")
   end

@@ -6,8 +6,11 @@
       <%= question_type_label(question.question_type) %>
     </p>
 
-    <div class="kanji-prompt select-none text-[clamp(1.875rem,9vw,2.75rem)] font-semibold leading-snug">
-      <%= question.prompt %>
+    <div class="kanji-prompt select-none text-[clamp(1.875rem,9vw,2.75rem)] font-semibold leading-snug"
+         data-controller="kanji-meaning"
+         data-action="click->kanji-meaning#toggle">
+      <%= question.prompt_html || question.prompt %>
+      <div data-kanji-meaning-target="bubble" class="kanji-meaning-bubble"></div>
     </div>
 
     <%= form_with url: reviews_path, method: :post, data: { turbo_frame: "question" } do |form| %>
