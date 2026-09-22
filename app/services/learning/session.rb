@@ -24,17 +24,22 @@ module Learning
 
     def due_count(user)
       scheduler = Scheduler.new(config: @config)
-      kanji_due = user.user_kanji.count { |uk| scheduler.due?(uk, now: @now) }
-      word_due = user.user_words.count { |uw| scheduler.due?(uw, now: @now) }
+      kanji_due = user.user_kanji.count { |uk| scheduler.due?(uk, now: @now) && !NumberFilter.skip?(user, uk) }
+      word_due = user.user_words.count { |uw| scheduler.due?(uw, now: @now) && !NumberFilter.skip?(user, uw) }
       kanji_due + word_due
     end
 
     def new_kanji_count(user)
-      fresh = user.user_kanji.count { |uk| uk.times_seen.zero? && uk.srs_state.blank? }
+      fresh = user.user_kanji.count { |uk| uk.times_seen.zero? && uk.srs_state.blank? && !NumberFilter.skip?(user, uk) }
       introduced_today = user.user_kanji.where(created_at: @now.all_day).count
-      remaining_slots = [ @config.new_kanji_per_session - introduced_today, 0 ].max
-      extra_eligible = Kanji.count - user.user_kanji.count
-      fresh + [ remaining_slots, extra_eligible ].min
+      unseen = user.skip_number_kanji? ? Kanji.where.not(character: Kanji::NUMBER_KANJI).count : Kanji.count
+      extra_eligible = unseen - user.user_kanji.count
+      if user.practice_mode?
+        fresh + extra_eligible
+      else
+        remaining_slots = [ @config.new_kanji_per_session - introduced_today, 0 ].max
+        fresh + [ remaining_slots, extra_eligible ].min
+      end
     end
   end
 end

@@ -43,11 +43,11 @@ module Learning
       @config = config
     end
 
-    def start(user)
+def start(user)
       state = self.class.state_for(user, config: @config)
       return nil if state.finished?
 
-question_for(state)
+      question_for(user, state)
     end
 
     # Records the answer, adjusts the band, and returns the next question — or
@@ -65,7 +65,7 @@ question_for(state)
       )
       Rails.cache.write(self.class.state_key(user), state)
       self.class.finish!(user, now: @now, config: @config) if state.finished?
-      state.finished? ? nil : question_for(state)
+      state.finished? ? nil : question_for(user, state)
     end
 
     def finish!(user)
@@ -77,8 +77,8 @@ question_for(state)
 
     private
 
-def question_for(state)
-      word = next_word(state)
+    def question_for(user, state)
+      word = next_word(user, state)
       return nil if word.nil?
 
       flashcard = Flashcard.new(token: SecureRandom.uuid, word_id: word.id,
@@ -87,7 +87,7 @@ def question_for(state)
       flashcard
     end
 
-    def next_word(state)
+    def next_word(user, state)
       bands = @config.diagnostic_bands
       lo, hi = bands[state.band.clamp(0, bands.size - 1)]
       pool = if hi
@@ -97,7 +97,14 @@ def question_for(state)
       end
       pool = pool.where.not(id: state.used_ids)
       pool = Word.where.not(id: state.used_ids) if pool.empty?
+      pool = exclude_number_words(pool) if user.skip_number_kanji?
       pool.order("random()").limit(1).first
+    end
+
+    # Users who opt out of number kanji are never tested on words that contain one.
+    def exclude_number_words(pool)
+      number_kanji_ids = Kanji.where(character: Kanji::NUMBER_KANJI).pluck(:id)
+      pool.where.not(id: WordKanji.where(kanji_id: number_kanji_ids).select(:word_id))
     end
 
     def next_band(band, correct)

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_09_232054) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_21_220820) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -34,11 +34,23 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_09_232054) do
     t.integer "frequency_rank"
     t.integer "grade"
     t.string "meaning_summary"
-    t.integer "radical_id"
+    t.bigint "radical_id"
     t.integer "stroke_count"
     t.string "unicode_codepoint"
     t.datetime "updated_at", null: false
     t.index ["character"], name: "index_kanji_on_character", unique: true
+    t.index ["radical_id"], name: "index_kanji_on_radical_id"
+  end
+
+  create_table "radicals", force: :cascade do |t|
+    t.string "character", null: false
+    t.datetime "created_at", null: false
+    t.string "name", null: false
+    t.integer "number"
+    t.integer "stroke_count"
+    t.datetime "updated_at", null: false
+    t.index ["character"], name: "index_radicals_on_character", unique: true
+    t.index ["number"], name: "index_radicals_on_number"
   end
 
   create_table "readings", force: :cascade do |t|
@@ -93,8 +105,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_09_232054) do
     t.datetime "created_at", null: false
     t.integer "difficulty"
     t.string "external_id"
+    t.jsonb "furigana"
     t.string "generation_version"
     t.text "japanese", null: false
+    t.jsonb "kanji_meanings"
     t.string "source", null: false
     t.text "translation"
     t.datetime "updated_at", null: false
@@ -144,6 +158,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_09_232054) do
 
   create_table "users", force: :cascade do |t|
     t.datetime "created_at", null: false
+    t.jsonb "settings", default: {}, null: false
     t.datetime "updated_at", null: false
   end
 
@@ -175,6 +190,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_09_232054) do
   add_foreign_key "exposures", "kanji"
   add_foreign_key "exposures", "sentences"
   add_foreign_key "exposures", "users"
+  add_foreign_key "kanji", "radicals"
   add_foreign_key "readings", "kanji"
   add_foreign_key "reviews", "users"
   add_foreign_key "sentence_words", "sentences"
