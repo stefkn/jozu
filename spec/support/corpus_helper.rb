@@ -26,13 +26,26 @@ module CorpusHelper
       @k[char] = k
     end
 
+    # Radical pairs so every question type has a plausible, non-degenerate
+    # distractor pool in the corpus (決/定, 必/要, 待/持).
+    radical_sets = { "決" => "汁", "定" => "汁", "必" => "心", "要" => "心", "待" => "彳", "持" => "彳" }
+    radicals = radical_sets.values.uniq.map { |name| Radical.find_or_create_by!(character: name, name:) }
+    radical_ids = radicals.index_by(&:character)
+    radical_sets.each do |char, radical|
+      @k[char].update!(radical_id: radical_ids[radical].id)
+    end
+
     words = {
       "決める" => [ "きめる", "to decide", 1 ],
       "決定" => [ "けってい", "decision", 2 ],
       "必ず" => [ "かならず", "certainly", 3 ],
       "必要" => [ "ひつよう", "necessary", 4 ],
       "待つ" => [ "まつ", "to wait", 5 ],
-      "持つ" => [ "もつ", "to hold", 6 ]
+      "持つ" => [ "もつ", "to hold", 6 ],
+      # Give 待つ/持つ a plausible distractor (same first char). Both keep a
+      # corpus kanji so every word seeds user_kanji in the diagnostic.
+      "待ち" => [ "まち", "waiting", 7 ],
+      "持参" => [ "じさん", "bring along", 8 ]
     }
     @w = {}
     words.each do |surface, (reading, meaning, freq)|

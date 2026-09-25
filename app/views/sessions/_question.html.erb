@@ -2,13 +2,20 @@
   <div class="mx-auto w-full max-w-md space-y-6 text-center"
        data-controller="quiz"
        data-quiz-presented-at="<%= (question.presented_at.to_f * 1000).to_i %>">
-    <p class="text-sm font-medium uppercase tracking-widest text-zinc-400">
+    <p class="text-sm font-medium uppercase tracking-widest text-zinc-400 dark:text-zinc-500">
       <%= question_type_label(question.question_type) %>
     </p>
 
-    <div class="kanji-prompt select-none text-[clamp(1.875rem,9vw,2.75rem)] font-semibold leading-snug">
-      <%= question.prompt %>
+    <div class="kanji-prompt select-none text-[clamp(1.875rem,9vw,2.75rem)] font-semibold leading-snug"
+         data-controller="kanji-meaning"
+         data-action="click->kanji-meaning#toggle">
+      <%= question.prompt_html || question.prompt %>
+      <div data-kanji-meaning-target="bubble" class="kanji-meaning-bubble"></div>
     </div>
+
+    <% if question.question_type == "sentence_to_kanji" && question.translation.present? %>
+      <p class="text-base text-zinc-500 dark:text-zinc-400"><%= question.translation %></p>
+    <% end %>
 
     <%= form_with url: reviews_path, method: :post, data: { turbo_frame: "question" } do |form| %>
       <%= hidden_field_tag :question_token, question.token %>
@@ -24,20 +31,25 @@
                   data-quiz-target="option"
                   data-answer="<%= option_id %>"
                   data-correct="<%= option_id == question.correct_option_id %>"
-                  class="flex min-h-20 items-center justify-center rounded-2xl border-2 border-zinc-300 bg-white px-3 py-5 text-lg font-semibold leading-snug break-words shadow-sm transition select-none hover:border-blue-400 hover:bg-blue-50 active:scale-[0.97] active:bg-blue-100 disabled:cursor-default disabled:shadow-none">
+                  class="flex min-h-20 items-center justify-center rounded-2xl border-2 border-zinc-300 bg-white px-3 py-5 text-lg font-semibold leading-snug break-words shadow-sm transition select-none hover:border-blue-400 hover:bg-blue-50 active:scale-[0.97] active:bg-blue-100 disabled:cursor-default disabled:shadow-none dark:border-zinc-600 dark:bg-zinc-900 dark:hover:border-blue-500 dark:hover:bg-blue-950 dark:active:bg-blue-900">
             <%= label %>
           </button>
         <% end %>
       </div>
 
+      <% if %w[kana_to_kanji sentence_to_kanji].include?(question.question_type) %>
+        <%= render partial: "sessions/option_details",
+                   locals: { details: Learning::OptionDetails.for_question(question) } %>
+      <% end %>
+
       <div data-quiz-target="confidenceRow" class="hidden space-y-2 pt-4">
-        <p class="text-sm text-zinc-500">How did that feel?</p>
+        <p class="text-sm text-zinc-500 dark:text-zinc-400">How did that feel?</p>
         <div class="grid grid-cols-5 gap-2">
           <% %w[instant knew thought guessed unknown].each do |confidence| %>
             <button type="submit"
                     name="confidence"
                     value="<%= confidence %>"
-                    class="min-h-14 rounded-xl border-2 border-zinc-300 bg-white px-0.5 text-sm font-semibold text-zinc-700 shadow-sm transition hover:bg-zinc-100 active:bg-zinc-200">
+                    class="min-h-14 rounded-xl border-2 border-zinc-300 bg-white px-0.5 text-sm font-semibold text-zinc-700 shadow-sm transition hover:bg-zinc-100 active:bg-zinc-200 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800 dark:active:bg-zinc-700">
               <%= confidence %>
             </button>
           <% end %>

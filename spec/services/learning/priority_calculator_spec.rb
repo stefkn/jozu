@@ -41,5 +41,27 @@ RSpec.describe Learning::PriorityCalculator do
       expect(result).not_to include(k["決"])
       expect(result.map(&:id).uniq.size).to eq(3)
     end
+
+    def with_number_kanji
+      number = Kanji.create!(character: "一", grade: 1, frequency_rank: 2, meaning_summary: "one")
+      word = Word.create!(surface: "一つ", reading: "ひとつ", meaning: "one (thing)", frequency_rank: 1)
+      WordKanji.create!(word:, kanji: number, position: 0)
+      number
+    end
+
+    it "excludes number kanji when the user opts out" do
+      number = with_number_kanji
+      user.set_setting("skip_number_kanji", true)
+
+      result = described_class.new.top_unseen(user, limit: 10)
+      expect(result).not_to include(number)
+      expect(result).to include(k["決"])
+    end
+
+    it "keeps number kanji when the user has not opted out" do
+      number = with_number_kanji
+      result = described_class.new.top_unseen(user, limit: 10)
+      expect(result).to include(number)
+    end
   end
 end

@@ -102,7 +102,7 @@ jobs:
           DATABASE_URL: postgres://postgres:postgres@localhost:5432
           # RAILS_MASTER_KEY: ${{ secrets.RAILS_MASTER_KEY }}
           # REDIS_URL: redis://localhost:6379/0
-        run: bin/rails tailwindcss:build && bin/rails db:test:prepare && bundle exec rspec spec/requests spec/services spec/segmentation
+        run: bin/rails tailwindcss:build && bin/rails db:test:prepare && bundle exec rspec spec/requests spec/services spec/segmentation spec/lib
 
   system-test:
     runs-on: ubuntu-latest
