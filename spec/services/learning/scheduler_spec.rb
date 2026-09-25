@@ -32,6 +32,21 @@ RSpec.describe Learning::Scheduler do
     it "maps correct + normal to good" do
       expect(described_class.grade_for(correct: true, confidence: "knew", response_time_ms: 2_000)).to eq(:good)
     end
+
+    it "does not penalise a slow sentence answer as hard" do
+      expect(described_class.grade_for(correct: true, confidence: "knew", response_time_ms: 8_000,
+                                       question_type: "sentence_to_kanji")).to eq(:good)
+    end
+
+    it "still penalises the same slowness on a single-kanji question" do
+      expect(described_class.grade_for(correct: true, confidence: "knew", response_time_ms: 8_000,
+                                       question_type: "kana_to_kanji")).to eq(:hard)
+    end
+
+    it "penalises an extremely slow sentence answer" do
+      expect(described_class.grade_for(correct: true, confidence: "knew", response_time_ms: 20_000,
+                                       question_type: "sentence_to_kanji")).to eq(:hard)
+    end
   end
 
   describe "#apply!" do

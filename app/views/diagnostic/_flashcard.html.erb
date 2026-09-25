@@ -1,6 +1,6 @@
 <turbo-frame id="question">
   <div class="mx-auto w-full max-w-md space-y-6 text-center">
-    <p class="text-sm font-medium uppercase tracking-widest text-zinc-400">
+    <p class="text-sm font-medium uppercase tracking-widest text-zinc-400 dark:text-zinc-500">
       Do you know this kanji?
     </p>
 
@@ -8,16 +8,16 @@
       <div data-flashcard-target="front">
         <button type="button"
                 data-action="click->flashcard#reveal"
-                class="kanji-prompt select-none w-full rounded-2xl border-2 border-zinc-300 bg-white px-4 py-12 text-[clamp(2rem,13vw,3.25rem)] font-semibold shadow-sm transition active:scale-[0.98] active:bg-blue-50">
+                class="kanji-prompt select-none w-full rounded-2xl border-2 border-zinc-300 bg-white px-4 py-12 text-[clamp(2rem,13vw,3.25rem)] font-semibold shadow-sm transition active:scale-[0.98] active:bg-blue-50 dark:border-zinc-600 dark:bg-zinc-900 dark:active:bg-blue-950">
           <%= flashcard.front %>
         </button>
-        <p class="mt-3 text-sm text-zinc-400">Tap to reveal the reading</p>
+        <p class="mt-3 text-sm text-zinc-400 dark:text-zinc-500">Tap to reveal the reading</p>
       </div>
 
       <div data-flashcard-target="back" class="hidden space-y-6">
-        <div class="rounded-2xl border-2 border-blue-200 bg-blue-50 px-4 py-10">
-          <p class="text-xs uppercase tracking-widest text-blue-400">Reading</p>
-          <div class="kanji-prompt mt-2 text-[clamp(2rem,13vw,3.25rem)] font-semibold text-blue-900">
+        <div class="rounded-2xl border-2 border-blue-200 bg-blue-50 px-4 py-10 dark:border-blue-800 dark:bg-blue-950">
+          <p class="text-xs uppercase tracking-widest text-blue-400 dark:text-blue-300">Reading</p>
+          <div class="kanji-prompt mt-2 text-[clamp(2rem,13vw,3.25rem)] font-semibold text-blue-900 dark:text-blue-100">
             <%= flashcard.back %>
           </div>
         </div>
@@ -25,18 +25,18 @@
         <%= form_with url: answer_diagnostic_path, method: :post, data: { turbo_frame: "question" } do |form| %>
           <%= hidden_field_tag :question_token, flashcard.token %>
 
-          <p class="text-sm text-zinc-500">Did you know the reading?</p>
+          <p class="text-sm text-zinc-500 dark:text-zinc-400">Did you know the reading?</p>
           <div class="grid grid-cols-3 gap-2">
             <button type="submit" name="knew" value="knew"
-                    class="min-h-14 rounded-xl border-2 border-green-300 bg-green-50 px-2 text-sm font-semibold text-green-800 shadow-sm transition active:bg-green-100">
+                    class="min-h-14 rounded-xl border-2 border-green-300 bg-green-50 px-2 text-sm font-semibold text-green-800 shadow-sm transition active:bg-green-100 dark:border-green-800 dark:bg-green-950 dark:text-green-200 dark:active:bg-green-900">
               Knew it
             </button>
             <button type="submit" name="knew" value="guessed"
-                    class="min-h-14 rounded-xl border-2 border-amber-300 bg-amber-50 px-2 text-sm font-semibold text-amber-800 shadow-sm transition active:bg-amber-100">
+                    class="min-h-14 rounded-xl border-2 border-amber-300 bg-amber-50 px-2 text-sm font-semibold text-amber-800 shadow-sm transition active:bg-amber-100 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200 dark:active:bg-amber-900">
               Guessed
             </button>
             <button type="submit" name="knew" value="unknown"
-                    class="min-h-14 rounded-xl border-2 border-red-300 bg-red-50 px-2 text-sm font-semibold text-red-800 shadow-sm transition active:bg-red-100">
+                    class="min-h-14 rounded-xl border-2 border-red-300 bg-red-50 px-2 text-sm font-semibold text-red-800 shadow-sm transition active:bg-red-100 dark:border-red-800 dark:bg-red-950 dark:text-red-200 dark:active:bg-red-900">
               Didn't know
             </button>
           </div>

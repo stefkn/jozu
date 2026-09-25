@@ -36,3 +36,8 @@
 
 /app/assets/builds/*
 !/app/assets/builds/.keep
+
+# Vendored reference-data sources (downloaded by script/fetch_reference_data.rb).
+# The converted vendor/data/*.tsv files ARE committed.
+/vendor/data/sources/*
+!/vendor/data/sources/.gitkeep

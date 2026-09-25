@@ -1,0 +1,254 @@
+character	number	name	stroke_count
+一	1	one	1
+｜	2	line	1
+丶	3	dot	1
+ノ	4	slash	1
+乙	5	second	1
+亅	6	hook	1
+二	7	two	2
+亠	8	lid	2
+人	9	man	2
+化	9	man	2
+个	9	man	2
+儿	10	son, legs	2
+入	11	enter	2
+ハ	12	eight	2
+并	12	eight	2
+冂	13	wide	2
+冖	14	cloth cover	2
+冫	15	ice	2
+几	16	table	2
+凵	17	receptacle	2
+刀	18	knife	2
+刈	18	knife	2
+力	19	power	2
+勹	20	wrap	2
+匕	21	spoon	2
+匚	22	box	2
+十	24	ten	2
+卜	25	divination	2
+卩	26	seal (device)	2
+厂	27	cliff	2
+厶	28	private	2
+又	29	again	2
+マ		マ	2
+九	5	second	2
+ユ		ユ	2
+乃	4	slash	2
+乞	5	second	2
+込	162	walk	3
+口	30	mouth	3
+囗	31	enclosure	3
+土	32	earth	3
+士	33	scholar	3
+夂	34	go	3
+夕	36	evening	3
+大	37	big	3
+女	38	woman	3
+子	39	child	3
+宀	40	roof	3
+寸	41	inch	3
+小	42	small	3
+尚		尚	3
+尢	43	lame	3
+尸	44	corpse	3
+屮	45	sprout	3
+山	46	mountain	3
+川	47	river	3
+巛	47	river	3
+工	48	work	3
+已	49	oneself	3
+巾	50	turban	3
+干	51	dry	3
+幺	52	short thread	3
+广	53	dotted cliff	3
+廴	54	long stride	3
+廾	55	arch	3
+弋	56	shoot	3
+弓	57	bow	3
+ヨ	58	snout	3
+彑	58	snout	3
+彡	59	bristle	3
+彳	60	step	3
+忙	61	heart	3
+扎	64	hand	3
+汁	85	water	3
+犯	94	dog	3
+艾	140	grass	3
+邦	163	city	3
+阡	170	mound	3
+也	5	second	3
+亡	8	lid	3
+及	29	again	3
+久	4	slash	3
+老	125	old	4
+心	61	heart	4
+戈	62	halberd	4
+戸	63	door	4
+手	64	hand	4
+支	65	branch	4
+攵	66	rap, tap	4
+文	67	script	4
+斗	68	dipper	4
+斤	69	axe	4
+方	70	square	4
+无	71	not	4
+日	72	sun	4
+曰	73	say	4
+月	74	moon	4
+木	75	tree	4
+欠	76	lack	4
+止	77	stop	4
+歹	78	death	4
+殳	79	weapon	4
+比	81	compare	4
+毛	82	fur	4
+氏	83	clan	4
+气	84	steam	4
+水	85	water	4
+火	86	fire	4
+杰		杰	4
+爪	87	claw	4
+父	88	father	4
+爻	89	trigrams	4
+爿	90	split wood	4
+片	91	slice	4
+牛	93	cow	4
+犬	94	dog	4
+礼	113	spirit	4
+王	96	jade	4
+元	10	son, legs	4
+井		井	4
+勿	20	wrap	4
+尤	43	lame	4
+五		五	4
+屯	45	sprout	4
+巴		巴	4
+毋	80	do not	4
+玄	95	profound	5
+瓦	98	tile	5
+甘	99	sweet	5
+生	100	life	5
+用	101	use	5
+田	102	field	5
+疋	103	bolt of cloth	5
+疔	104	sickness	5
+癶	105	footsteps	5
+白	106	white	5
+皮	107	skin	5
+皿	108	dish	5
+目	109	eye	5
+矛	110	spear	5
+矢	111	arrow	5
+石	112	stone	5
+示	113	spirit	5
+禹		禹	5
+禾	115	grain	5
+穴	116	cave	5
+立	117	stand	5
+初	18	knife	5
+世		世	5
+巨	22	box	5
+冊	13	wide	5
+母	80	do not	5
+買	154	shell	5
+牙	92	fang	5
+瓜	97	melon	6
+竹	118	bamboo	6
+米	119	rice	6
+糸	120	silk	6
+缶	121	jar	6
+羊	123	sheep	6
+羽	124	feather	6
+而	126	and	6
+耒	127	plough	6
+耳	128	ear	6
+聿	129	brush	6
+肉	130	meat	6
+自	132	self	6
+至	133	arrive	6
+臼	134	mortar	6
+舌	135	tongue	6
+舟	137	boat	6
+艮	138	stopping	6
+色	139	color	6
+虍	141	tiger	6
+虫	142	insect	6
+血	143	blood	6
+行	144	walk enclosure	6
+衣	145	clothes	6
+西	146	cover	6
+臣	131	minister	7
+見	147	see	7
+角	148	horn	7
+言	149	speech	7
+谷	150	valley	7
+豆	151	bean	7
+豕	152	pig	7
+豸	153	badger	7
+貝	154	shell	7
+赤	155	red	7
+走	156	run	7
+足	157	foot	7
+身	158	body	7
+車	159	cart	7
+辛	160	bitter	7
+辰	161	morning	7
+酉	164	wine	7
+釆	165	distinguish	7
+里	166	village	7
+舛	136	oppose	7
+麦	199	wheat	7
+金	167	gold	8
+長	168	long	8
+門	169	gate	8
+隶	171	slave	8
+隹	172	short-tailed bird	8
+雨	173	rain	8
+青	174	blue	8
+非	175	wrong	8
+奄		奄	8
+岡	46	mountain	8
+免	10	son, legs	8
+斉	210	even	8
+面	176	face	9
+革	177	leather	9
+韭	179	leek	9
+音	180	sound	9
+頁	181	leaf	9
+風	182	wind	9
+飛	183	fly	9
+食	184	eat	9
+首	185	head	9
+香	186	fragrant	9
+品	30	mouth	9
+馬	187	horse	10
+骨	188	bone	10
+高	189	tall	10
+髟	190	hair	10
+鬥	191	fight	10
+鬯	192	sacrificial wine	10
+鬲	193	cauldron	10
+鬼	194	ghost	10
+竜	212	dragon	10
+韋	178	tanned leather	10
+魚	195	fish	11
+鳥	196	bird	11
+鹵	197	salt	11
+鹿	198	deer	11
+麻	200	hemp	11
+亀	213	turtle	11
+滴	85	water	11
+黄	201	yellow	11
+黒	203	black	11
+黍	202	millet	12
+黹	204	embroidery	12
+無		無	12
+歯	211	tooth	12
+黽	205	frog	13
+鼎	206	tripod	13
+鼓	207	drum	13
+鼠	208	rat	13
+鼻	209	nose	14
+齊	210	even	14
+龠	214	flute	17

@@ -1,6 +1,10 @@
 # Tiny hand-curated corpus (plan §4.5) for fast dev and tests:
 # a demo user plus ~50 kanji, ~110 words, and a few hundred sentences.
 # Idempotent: safe to run any number of times.
+#
+# The curated corpus only seeds when the reference bank is empty, so running
+# db:seed after jozu:import does not downgrade the real data. The demo user is
+# always ensured.
 
 # --- Kanji metadata: character => { grade, freq_rank, radical, onyomi, kunyomi, meaning } ---
 KANJI = {
@@ -434,7 +438,8 @@ SENTENCES = [
   [ "電話番号を書いてもらえますか。", "Can you write down your phone number?" ]
 ].freeze
 
-puts "Seeding kanji..."
+if Kanji.count.zero?
+  puts "Seeding kanji..."
 kanji_by_char = {}
 KANJI.each do |character, data|
   next if data.nil?
@@ -493,6 +498,8 @@ SENTENCES.each do |japanese, translation|
       end_position: token.end_position
     )
   end
+end
+
 end
 
 puts "Seeding demo user..."

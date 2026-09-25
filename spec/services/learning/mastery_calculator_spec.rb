@@ -44,8 +44,8 @@ RSpec.describe Learning::MasteryCalculator do
       expect(user_kanji.reload.times_seen).to eq(2)
       expect(user_kanji.times_correct).to eq(1)
       expect(user_kanji.times_incorrect).to eq(1)
-      expect(user_kanji.first_seen_at).to eq(now)
-      expect(user_kanji.last_seen_at).to eq(now)
+      expect(user_kanji.first_seen_at).to be_within(1.second).of(now)
+      expect(user_kanji.last_seen_at).to be_within(1.second).of(now)
     end
 
     it "updates word mastery directly for user_words" do

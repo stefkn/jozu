@@ -14,6 +14,8 @@ Rails.application.routes.draw do
     post :answer, on: :collection
   end
 
+  resource :settings, only: %i[show update], controller: "settings"
+
   get "progress", to: "progress#index"
 
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.
