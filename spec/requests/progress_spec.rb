@@ -16,6 +16,8 @@ RSpec.describe "Progress page", type: :request do
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("Characters you can read")
     expect(response.body).to include("決")
+    expect(response.body).to include("decide")
+    expect(response.body).to include("けつ")
     expect(response.body).to include("Words you can read")
     expect(response.body).to include("決める")
     expect(response.body).to include("きめる")

@@ -47,9 +47,12 @@
     <% if @progress.known_kanji.any? %>
       <ul id="known-kanji" class="mt-4 grid grid-cols-4 gap-2 sm:grid-cols-6">
         <% @progress.known_kanji.each do |item| %>
-          <li class="rounded-xl border border-green-200 bg-green-50 px-2 py-3 text-center dark:border-green-900 dark:bg-green-950" title="<%= item.meaning_summary %> · mastery <%= item.mastery_score&.round(2) %>">
+          <li class="rounded-xl border border-green-200 bg-green-50 px-2 py-3 text-center dark:border-green-900 dark:bg-green-950" title="<%= item.readings.join(", ") %> · <%= item.meaning_summary %> · mastery <%= item.mastery_score&.round(2) %>">
             <div class="text-2xl font-semibold leading-none"><%= item.character %></div>
-            <div class="mt-1 truncate text-[11px] text-zinc-500 dark:text-zinc-400"><%= item.meaning_summary %></div>
+            <% if item.readings.any? %>
+              <div class="mt-1 truncate text-[11px] text-zinc-600 dark:text-zinc-300"><%= item.readings.join("、 ") %></div>
+            <% end %>
+            <div class="mt-0.5 truncate text-[11px] text-zinc-500 dark:text-zinc-400"><%= item.meaning_summary %></div>
           </li>
         <% end %>
       </ul>
@@ -65,9 +68,12 @@
     <% if @progress.learning_kanji.any? %>
       <ul id="learning-kanji" class="mt-4 grid grid-cols-4 gap-2 sm:grid-cols-6">
         <% @progress.learning_kanji.each do |item| %>
-          <li class="rounded-xl border border-blue-200 bg-blue-50 px-2 py-3 text-center dark:border-blue-900 dark:bg-blue-950" title="<%= item.meaning_summary %> · mastery <%= item.mastery_score&.round(2) %>">
+          <li class="rounded-xl border border-blue-200 bg-blue-50 px-2 py-3 text-center dark:border-blue-900 dark:bg-blue-950" title="<%= item.readings.join(", ") %> · <%= item.meaning_summary %> · mastery <%= item.mastery_score&.round(2) %>">
             <div class="text-2xl font-semibold leading-none"><%= item.character %></div>
-            <div class="mt-1 truncate text-[11px] text-zinc-500 dark:text-zinc-400"><%= item.meaning_summary %></div>
+            <% if item.readings.any? %>
+              <div class="mt-1 truncate text-[11px] text-zinc-600 dark:text-zinc-300"><%= item.readings.join("、 ") %></div>
+            <% end %>
+            <div class="mt-0.5 truncate text-[11px] text-zinc-500 dark:text-zinc-400"><%= item.meaning_summary %></div>
           </li>
         <% end %>
       </ul>
@@ -83,9 +89,12 @@
     <% if @progress.weak_kanji.any? %>
       <ul id="weak-kanji" class="mt-4 grid grid-cols-4 gap-2 sm:grid-cols-6">
         <% @progress.weak_kanji.each do |item| %>
-          <li class="rounded-xl border border-amber-200 bg-amber-50 px-2 py-3 text-center dark:border-amber-900 dark:bg-amber-950" title="<%= item.meaning_summary %> · mastery <%= item.mastery_score&.round(2) %>">
+          <li class="rounded-xl border border-amber-200 bg-amber-50 px-2 py-3 text-center dark:border-amber-900 dark:bg-amber-950" title="<%= item.readings.join(", ") %> · <%= item.meaning_summary %> · mastery <%= item.mastery_score&.round(2) %>">
             <div class="text-2xl font-semibold leading-none"><%= item.character %></div>
-            <div class="mt-1 truncate text-[11px] text-zinc-500 dark:text-zinc-400"><%= item.meaning_summary %></div>
+            <% if item.readings.any? %>
+              <div class="mt-1 truncate text-[11px] text-zinc-600 dark:text-zinc-300"><%= item.readings.join("、 ") %></div>
+            <% end %>
+            <div class="mt-0.5 truncate text-[11px] text-zinc-500 dark:text-zinc-400"><%= item.meaning_summary %></div>
           </li>
         <% end %>
       </ul>
@@ -101,9 +110,12 @@
     <% if @progress.unknown_kanji.any? %>
       <ul id="unknown-kanji" class="mt-4 grid grid-cols-4 gap-2 sm:grid-cols-6">
         <% @progress.unknown_kanji.each do |item| %>
-          <li class="rounded-xl border border-zinc-200 px-2 py-3 text-center dark:border-zinc-700" title="<%= item.meaning_summary %>">
+          <li class="rounded-xl border border-zinc-200 px-2 py-3 text-center dark:border-zinc-700" title="<%= item.readings.join(", ") %> · <%= item.meaning_summary %>">
             <div class="text-2xl font-semibold leading-none text-zinc-400 dark:text-zinc-500"><%= item.character %></div>
-            <div class="mt-1 truncate text-[11px] text-zinc-400 dark:text-zinc-500"><%= item.meaning_summary %></div>
+            <% if item.readings.any? %>
+              <div class="mt-1 truncate text-[11px] text-zinc-400 dark:text-zinc-500"><%= item.readings.join("、 ") %></div>
+            <% end %>
+            <div class="mt-0.5 truncate text-[11px] text-zinc-400 dark:text-zinc-500"><%= item.meaning_summary %></div>
           </li>
         <% end %>
       </ul>

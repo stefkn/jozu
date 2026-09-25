@@ -5,11 +5,11 @@ module Learning
   # words behind them so the Progress page can list everything the learner
   # should be able to read/recognise:
   # - kanji grouped by bucket (known/learning/weak/unknown), each entry with
-  #   its character, meaning, frequency rank and mastery;
+  #   its character, readings, meaning, frequency rank and mastery;
   # - words split into readable (mastery >= known_threshold) vs. still
   #   learning, each entry with surface, reading, meaning and mastery.
   class Progress
-    KanjiItem = Data.define(:character, :meaning_summary, :frequency_rank, :mastery_score, :bucket)
+    KanjiItem = Data.define(:character, :meaning_summary, :readings, :frequency_rank, :mastery_score, :bucket)
     WordItem = Data.define(:surface, :reading, :meaning, :frequency_rank, :mastery_score)
 
     Result = Data.define(:total_kanji, :covered, :known, :learning, :weak, :unknown,
@@ -32,7 +32,7 @@ module Learning
     end
 
     def call(user, top_n: 500)
-      top_kanji = Kanji.where.not(frequency_rank: nil).order(:frequency_rank).limit(top_n)
+      top_kanji = Kanji.where.not(frequency_rank: nil).order(:frequency_rank).limit(top_n).includes(:readings)
       rows = user.user_kanji.to_a.index_by(&:kanji_id)
 
       buckets = Hash.new(0)
@@ -40,10 +40,12 @@ module Learning
       grouped = { known: [], learning: [], weak: [], unknown: [] }
       top_kanji.each do |kanji|
         uk = rows[kanji.id]
+        readings = ordered_readings(kanji)
         if uk.nil?
           buckets[:unknown] += 1
           grouped[:unknown] << KanjiItem.new(character: kanji.character,
                                             meaning_summary: kanji.meaning_summary,
+                                            readings:,
                                             frequency_rank: kanji.frequency_rank,
                                             mastery_score: nil,
                                             bucket: :unknown)
@@ -53,6 +55,7 @@ module Learning
           buckets[b] += 1
           grouped[b] << KanjiItem.new(character: kanji.character,
                                      meaning_summary: kanji.meaning_summary,
+                                     readings:,
                                      frequency_rank: kanji.frequency_rank,
                                      mastery_score: uk.mastery_score,
                                      bucket: b)
@@ -92,6 +95,13 @@ module Learning
 
     def bucket(score)
       BUCKETS.find { |threshold, _| score >= threshold }&.last || :unknown
+    end
+
+    # Onyomi first, then kunyomi, then nanori — each alphabetical — so the
+    # most dictionary-like reading leads both in the service payload and UI.
+    def ordered_readings(kanji)
+      kanji.readings.sort_by { |r| [ Reading::KINDS.index(r.kind) || 99, r.reading ] }
+           .map(&:reading)
     end
   end
 end

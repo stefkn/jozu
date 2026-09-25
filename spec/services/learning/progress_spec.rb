@@ -32,6 +32,9 @@ RSpec.describe Learning::Progress do
     expect(result.unknown_kanji.map(&:character)).to match_array(%w[要 待 持])
     expect(result.known_kanji.first.meaning_summary).to eq("decide")
     expect(result.known_kanji.first.mastery_score).to eq(0.9)
+    expect(result.known_kanji.first.readings).to eq(%w[けつ き])
+    expect(result.learning_kanji.first.readings).to eq([ "てい" ])
+    expect(result.unknown_kanji.flat_map(&:readings)).to include("よう", "たい", "じ")
   end
 
   it "splits words into readable vs learning" do
