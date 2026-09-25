@@ -97,6 +97,24 @@ html.dark {
   display: block;
 }
 
+/* Study-note example sentences: furigana always visible (unlike the main
+   prompt, where readings are recalled). Tapping still reveals the English
+   meaning via the kanji-meaning bubble. */
+.study-furigana ruby {
+  ruby-position: over;
+}
+
+.study-furigana ruby rt {
+  display: inline;
+  font-size: 0.6em;
+  font-weight: 500;
+  color: var(--color-zinc-500);
+}
+
+.dark .study-furigana ruby rt {
+  color: var(--color-zinc-400);
+}
+
 /* Touch-friendly buttons: no tap-highlight flash */
 button,
 a {

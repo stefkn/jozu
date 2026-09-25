@@ -1,0 +1,76 @@
+<%# Per-option study notes for "Choose the kanji" questions. Hidden until the
+    learner picks an answer (quiz controller reveals it), so nothing leaks.
+    Only common readings are shown, so no per-reading highlight is needed. %>
+<% if details.any? %>
+  <div data-quiz-target="details"
+       class="hidden space-y-6 pt-6 text-left"
+       data-controller="kanji-meaning"
+       data-action="click->kanji-meaning#toggle">
+    <p class="mt-6 text-center text-xs font-medium uppercase tracking-widest text-zinc-400 dark:text-zinc-500">
+      Study notes
+    </p>
+
+    <% details.each do |detail| %>
+      <div class="rounded-xl border border-zinc-200 bg-white px-4 py-4 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
+        <% if detail.is_a?(Learning::OptionDetails::KanjiOption) %>
+          <p class="text-base font-semibold">
+            <%= detail.character %>
+            <% if detail.meaning.present? %>
+              <span class="ml-2 text-sm font-normal text-zinc-500 dark:text-zinc-400"><%= detail.meaning %></span>
+            <% end %>
+          </p>
+          <% if detail.readings.any? %>
+            <p class="mt-2 flex flex-wrap items-center justify-center gap-2 text-sm">
+              <% detail.readings.each do |r| %>
+                <span class="rounded-md bg-zinc-100 px-2 py-1 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200"
+                      title="Commonly used <%= r.kind %>">
+                  <%= r.reading %><span class="ml-1.5 text-[10px] font-medium uppercase opacity-60"><%= r.kind == "onyomi" ? "ON" : r.kind == "kunyomi" ? "KUN" : r.kind %></span>
+                </span>
+              <% end %>
+            </p>
+          <% end %>
+        <% else %>
+          <p class="text-base font-semibold">
+            <%= detail.surface %>
+            <span class="ml-2 text-sm font-normal text-zinc-500 dark:text-zinc-400"><%= detail.reading %></span>
+          </p>
+          <% if detail.meaning.present? %>
+            <p class="mt-1 text-sm text-zinc-600 dark:text-zinc-300"><%= detail.meaning %></p>
+          <% end %>
+          <% detail.kanji.each do |k| %>
+            <p class="mt-3 text-sm">
+              <span class="font-semibold"><%= k.character %></span>
+              <% if k.meaning.present? %>
+                <span class="text-zinc-500 dark:text-zinc-400"> — <%= k.meaning %></span>
+              <% end %>
+            </p>
+            <% if k.readings.any? %>
+              <p class="mt-1.5 flex flex-wrap items-center justify-center gap-2 text-sm">
+                <% k.readings.each do |r| %>
+                  <span class="rounded-md bg-zinc-100 px-2 py-1 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200"
+                        title="Commonly used <%= r.kind %>">
+                    <%= r.reading %><span class="ml-1.5 text-[10px] font-medium uppercase opacity-60"><%= r.kind == "onyomi" ? "ON" : r.kind == "kunyomi" ? "KUN" : r.kind %></span>
+                  </span>
+                <% end %>
+              </p>
+            <% end %>
+          <% end %>
+        <% end %>
+
+        <% if detail.examples.any? %>
+          <ul class="mt-3 space-y-2.5 border-t border-zinc-100 pt-3 dark:border-zinc-800">
+            <% detail.examples.each do |ex| %>
+              <li>
+                <p class="study-furigana text-[15px] leading-relaxed"><%= ex.html %></p>
+                <% if ex.translation.present? %>
+                  <p class="mt-0.5 text-[13px] text-zinc-500 dark:text-zinc-400"><%= ex.translation %></p>
+                <% end %>
+              </li>
+            <% end %>
+          </ul>
+        <% end %>
+      </div>
+    <% end %>
+    <div data-kanji-meaning-target="bubble" class="kanji-meaning-bubble"></div>
+  </div>
+<% end %>
