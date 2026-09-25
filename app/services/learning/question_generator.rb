@@ -69,7 +69,8 @@ module Learning
       Question.new(token:, reviewable_type: reviewable.class.name, reviewable_id: reviewable.id,
                    question_type: "sentence_to_kanji", prompt:, prompt_html:, options:,
                    correct_option_id: kanji.id.to_s,
-                   distractors: distractors.map { |id, _| id }, sentence_id: sentence.id, presented_at: @now)
+                   distractors: distractors.map { |id, _| id }, sentence_id: sentence.id, presented_at: @now,
+                   translation: sentence.translation)
     end
 
     def generate_kanji_to_meaning(user, reviewable, token)
