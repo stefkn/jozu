@@ -19,7 +19,7 @@ module Learning
     def call(user)
       reviewable = next_due(user)
       if reviewable
-        generate_for(user, reviewable)
+        generate_for(user)
       else
         introduce_new_kanji(user)
       end
@@ -28,39 +28,60 @@ module Learning
     private
 
     def next_due(user)
+      due_reviewables(user).min_by { |r| [ r.due_at, r.id ] }
+    end
+
+    def due_reviewables(user)
       due = user.user_kanji.select { |uk| scheduler.due?(uk, now: @now) }
       due.concat(user.user_words.select { |uw| scheduler.due?(uw, now: @now) })
-      due.min_by { |r| [ r.due_at, r.id ] }
+      due.reject { |r| NumberFilter.skip?(user, r) }
     end
 
     def introduce_new_kanji(user)
-      fresh = user.user_kanji.select { |uk| uk.times_seen.zero? && uk.srs_state.blank? }
-      introduced_today = user.user_kanji.where(created_at: @now.all_day).count
-      return nil if fresh.size >= @config.new_kanji_per_session
-      return nil if introduced_today >= @config.new_kanji_per_session
+      # Query the DB, not the (possibly stale) cached `user.user_kanji` association:
+      # answering a question saves a fresh record that the in-memory cache misses.
+      fresh = UserKanji.where(user_id: user.id).select { |uk| uk.times_seen.zero? && uk.srs_state.blank? }
+      fresh = fresh.reject { |uk| NumberFilter.skip?(user, uk) }
+
+      # An already-introduced-but-unanswered kanji (an interrupted session) is
+      # served first; only introduce a NEW kanji while under the per-session cap.
+      # Otherwise a session deadlocks as soon as the fresh pool fills up, showing
+      # "session complete" forever.
+      unless fresh.empty?
+        return generate_question(user, fresh.min_by(&:created_at), "kanji_to_meaning")
+      end
+
+      return nil if !user.practice_mode? && user.user_kanji.where(created_at: @now.all_day).count >= @config.new_kanji_per_session
 
       kanji = PriorityCalculator.new(config: @config).top_unseen(user, limit: 1).first
       return nil if kanji.nil?
 
-      reviewable = UserKanji.create!(user:, kanji:)
-      question = QuestionGenerator.new(now: @now).generate(
-        user, reviewable, question_type: "kanji_to_meaning"
-      )
+      generate_question(user, UserKanji.create!(user:, kanji:), "kanji_to_meaning")
+    end
+
+    def generate_question(user, reviewable, question_type)
+      question = QuestionGenerator.new(now: @now).generate(user, reviewable, question_type:)
       return nil if question.nil?
 
       QuestionStore.put(question)
       question
     end
 
-    def generate_for(user, reviewable)
-      question_type = question_type_for(reviewable)
-      attempts = [ question_type, fallback_type(question_type) ]
-      attempts.each do |type|
-        question = QuestionGenerator.new(now: @now).generate(user, reviewable, question_type: type)
-        next if question.nil?
+    def generate_for(user)
+      # Try each due reviewable in due order; if one can't produce a
+      # non-degenerate question (e.g. its distractor pool is empty), move on to
+      # the next instead of dead-ending the session. The association order is
+      # unspecified, so sort explicitly by due date before iterating.
+      due = due_reviewables(user).sort_by { |r| [ r.due_at, r.id ] }
+      due.each do |item|
+        attempts = [ question_type_for(item), fallback_type(question_type_for(item)) ].uniq
+        attempts.each do |type|
+          question = QuestionGenerator.new(now: @now).generate(user, item, question_type: type)
+          next if question.nil?
 
-        QuestionStore.put(question)
-        return question
+          QuestionStore.put(question)
+          return question
+        end
       end
       nil
     end

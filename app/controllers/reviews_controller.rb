@@ -14,7 +14,8 @@ class ReviewsController < ApplicationController
     response_time_ms = review_params[:response_time_ms].presence&.to_i
     now = Time.current
 
-    grade = Learning::Scheduler.grade_for(correct:, confidence:, response_time_ms:)
+    grade = Learning::Scheduler.grade_for(correct:, confidence:, response_time_ms:,
+                                          question_type: question.question_type)
     mastery = Learning::MasteryCalculator.update!(reviewable, question_type: question.question_type,
                                                  correct:, confidence:, now:)
     scheduling = Learning::Scheduler.new.apply!(reviewable, grade:, now:)

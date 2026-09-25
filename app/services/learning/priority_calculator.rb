@@ -26,17 +26,48 @@ module Learning
       Result.new(kanji:, priority:, frequency_score: freq, leverage_score: lev, uncertainty: unc)
     end
 
+    # Batched fresh-kanji ranking (plan §7). Loading every unseen kanji and scoring
+    # it via per-kanji queries (WordKanji join + UserWord lookups) balloons to a
+    # few thousand queries once the bank passes ~1k kanji; preload all the lookups
+    # in a handful of queries and score in memory.
     def top_unseen(user, limit:)
       seen_ids = user.user_kanji.pluck(:kanji_id)
-      candidates = Kanji.where.not(id: seen_ids).order(:frequency_rank)
-      results = candidates.map { |k| call(user, kanji: k) }
-      results.reject { |r| r.priority.zero? }
-             .sort_by { |r| [ -r.priority, r.kanji.frequency_rank.to_i ] }
-             .first(limit)
-             .map(&:kanji)
+      candidates = Kanji.where.not(id: seen_ids)
+      candidates = candidates.where.not(character: Kanji::NUMBER_KANJI) if user.skip_number_kanji?
+      candidates = candidates.order(:frequency_rank).to_a
+
+      user_kanji_by_id = UserKanji.where(user_id: user.id).index_by(&:kanji_id)
+      user_word_by_id = UserWord.where(user_id: user.id).index_by(&:word_id)
+      word_kanji_by_id = WordKanji.where(kanji_id: candidates.map(&:id)).group_by(&:kanji_id)
+      words_by_id = Word.where(id: word_kanji_by_id.values.flatten.map(&:word_id).uniq).index_by(&:id)
+
+      ranked = candidates.filter_map do |k|
+        words = (word_kanji_by_id[k.id] || []).filter_map { |wk| words_by_id[wk.word_id] }
+        priority = frequency_score(k) * leverage_for(words, user_word_by_id) * uncertainty(user_kanji_by_id[k.id])
+        next if priority.zero?
+
+        [ priority, k.frequency_rank.to_i, k ]
+      end
+      ranked.sort_by { |priority, rank, _| [ -priority, rank ] }
+            .first(limit)
+            .map { |_, _, kanji| kanji }
     end
 
     private
+
+    # Same average word weight LeverageCalculator computes, from preloaded state.
+    def leverage_for(words, user_word_by_id)
+      return 0.0 if words.empty?
+
+      sum = words.sum { |w| user_word_by_id[w.id]&.mastery_score || prior_by_frequency(w.frequency_rank) }
+      (sum / words.size).clamp(0.0, 1.0)
+    end
+
+    def prior_by_frequency(rank)
+      return 0.1 if rank.nil?
+
+      0.5 * Math.exp(-rank / 2000.0)
+    end
 
     # 1/log2(rank + 2), normalized so rank 1 scores 1.0 (plan §7).
     def frequency_score(kanji)
