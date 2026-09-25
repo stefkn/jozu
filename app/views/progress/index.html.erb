@@ -3,39 +3,153 @@
 <div class="space-y-6">
   <h1 class="text-2xl font-bold">How much can I read?</h1>
 
-  <div class="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
+  <div class="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
     <div class="flex items-baseline justify-between">
-      <h2 class="text-sm font-semibold text-zinc-500">Most common <%= @progress.total_kanji %> kanji</h2>
+      <h2 class="text-sm font-semibold text-zinc-500 dark:text-zinc-400">Most common <%= @progress.total_kanji %> kanji</h2>
       <span class="text-2xl font-bold"><%= @progress.coverage_percent %>%</span>
     </div>
 
-    <div class="mt-3 h-3 w-full overflow-hidden rounded-full bg-zinc-200">
-      <div class="h-full rounded-full bg-blue-600" style="width: <%= @progress.coverage_percent %>%"></div>
+    <div class="mt-3 h-3 w-full overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-700">
+      <div class="h-full rounded-full bg-blue-600 dark:bg-blue-500" style="width: <%= @progress.coverage_percent %>%"></div>
     </div>
 
     <dl class="mt-5 grid grid-cols-4 gap-2 text-center">
       <div>
-        <dt class="text-2xl font-bold text-green-600"><%= @progress.known %></dt>
-        <dd class="text-xs text-zinc-500">Known</dd>
+        <dt class="text-2xl font-bold text-green-600 dark:text-green-400"><%= @progress.known %></dt>
+        <dd class="text-xs text-zinc-500 dark:text-zinc-400">Known</dd>
       </div>
       <div>
-        <dt class="text-2xl font-bold text-blue-600"><%= @progress.learning %></dt>
-        <dd class="text-xs text-zinc-500">Learning</dd>
+        <dt class="text-2xl font-bold text-blue-600 dark:text-blue-400"><%= @progress.learning %></dt>
+        <dd class="text-xs text-zinc-500 dark:text-zinc-400">Learning</dd>
       </div>
       <div>
-        <dt class="text-2xl font-bold text-amber-500"><%= @progress.weak %></dt>
-        <dd class="text-xs text-zinc-500">Weak</dd>
+        <dt class="text-2xl font-bold text-amber-500 dark:text-amber-400"><%= @progress.weak %></dt>
+        <dd class="text-xs text-zinc-500 dark:text-zinc-400">Weak</dd>
       </div>
       <div>
-        <dt class="text-2xl font-bold text-zinc-300"><%= @progress.unknown %></dt>
-        <dd class="text-xs text-zinc-500">Unknown</dd>
+        <dt class="text-2xl font-bold text-zinc-300 dark:text-zinc-600"><%= @progress.unknown %></dt>
+        <dd class="text-xs text-zinc-500 dark:text-zinc-400">Unknown</dd>
       </div>
     </dl>
   </div>
 
-  <div class="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
-    <h2 class="text-sm font-semibold text-zinc-500">Words unlocked</h2>
+  <div class="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
+    <h2 class="text-sm font-semibold text-zinc-500 dark:text-zinc-400">Words unlocked</h2>
     <p class="mt-2 text-3xl font-bold"><%= @progress.words_unlocked %></p>
-    <p class="mt-1 text-xs text-zinc-500">words you know well enough to read</p>
+    <p class="mt-1 text-xs text-zinc-500 dark:text-zinc-400">words you know well enough to read</p>
   </div>
+
+  <section aria-labelledby="readable-kanji-heading" class="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
+    <h2 id="readable-kanji-heading" class="text-sm font-semibold text-zinc-500 dark:text-zinc-400">
+      Characters you can read <span class="ml-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-bold text-green-700 dark:bg-green-950 dark:text-green-300"><%= @progress.known %></span>
+    </h2>
+    <p class="mt-1 text-xs text-zinc-500 dark:text-zinc-400">Kanji with reliable mastery — you should recognise these in the wild.</p>
+    <% if @progress.known_kanji.any? %>
+      <ul id="known-kanji" class="mt-4 grid grid-cols-4 gap-2 sm:grid-cols-6">
+        <% @progress.known_kanji.each do |item| %>
+          <li class="rounded-xl border border-green-200 bg-green-50 px-2 py-3 text-center dark:border-green-900 dark:bg-green-950" title="<%= item.meaning_summary %> · mastery <%= item.mastery_score&.round(2) %>">
+            <div class="text-2xl font-semibold leading-none"><%= item.character %></div>
+            <div class="mt-1 truncate text-[11px] text-zinc-500 dark:text-zinc-400"><%= item.meaning_summary %></div>
+          </li>
+        <% end %>
+      </ul>
+    <% else %>
+      <p class="mt-4 text-sm text-zinc-500 dark:text-zinc-400">Nothing reliably readable yet — keep going through sessions.</p>
+    <% end %>
+  </section>
+
+  <section aria-labelledby="learning-kanji-heading" class="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
+    <h2 id="learning-kanji-heading" class="text-sm font-semibold text-zinc-500 dark:text-zinc-400">
+      Characters you're learning <span class="ml-1 rounded-full bg-blue-100 px-2 py-0.5 text-xs font-bold text-blue-700 dark:bg-blue-950 dark:text-blue-300"><%= @progress.learning %></span>
+    </h2>
+    <% if @progress.learning_kanji.any? %>
+      <ul id="learning-kanji" class="mt-4 grid grid-cols-4 gap-2 sm:grid-cols-6">
+        <% @progress.learning_kanji.each do |item| %>
+          <li class="rounded-xl border border-blue-200 bg-blue-50 px-2 py-3 text-center dark:border-blue-900 dark:bg-blue-950" title="<%= item.meaning_summary %> · mastery <%= item.mastery_score&.round(2) %>">
+            <div class="text-2xl font-semibold leading-none"><%= item.character %></div>
+            <div class="mt-1 truncate text-[11px] text-zinc-500 dark:text-zinc-400"><%= item.meaning_summary %></div>
+          </li>
+        <% end %>
+      </ul>
+    <% else %>
+      <p class="mt-4 text-sm text-zinc-500 dark:text-zinc-400">Nothing in progress right now.</p>
+    <% end %>
+  </section>
+
+  <section aria-labelledby="weak-kanji-heading" class="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
+    <h2 id="weak-kanji-heading" class="text-sm font-semibold text-zinc-500 dark:text-zinc-400">
+      Weak characters <span class="ml-1 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-bold text-amber-700 dark:bg-amber-950 dark:text-amber-300"><%= @progress.weak %></span>
+    </h2>
+    <% if @progress.weak_kanji.any? %>
+      <ul id="weak-kanji" class="mt-4 grid grid-cols-4 gap-2 sm:grid-cols-6">
+        <% @progress.weak_kanji.each do |item| %>
+          <li class="rounded-xl border border-amber-200 bg-amber-50 px-2 py-3 text-center dark:border-amber-900 dark:bg-amber-950" title="<%= item.meaning_summary %> · mastery <%= item.mastery_score&.round(2) %>">
+            <div class="text-2xl font-semibold leading-none"><%= item.character %></div>
+            <div class="mt-1 truncate text-[11px] text-zinc-500 dark:text-zinc-400"><%= item.meaning_summary %></div>
+          </li>
+        <% end %>
+      </ul>
+    <% else %>
+      <p class="mt-4 text-sm text-zinc-500 dark:text-zinc-400">No weak characters — nice.</p>
+    <% end %>
+  </section>
+
+  <details class="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
+    <summary class="cursor-pointer text-sm font-semibold text-zinc-500 dark:text-zinc-400">
+      Not yet seen <span class="ml-1 rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-bold text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300"><%= @progress.unknown %></span>
+    </summary>
+    <% if @progress.unknown_kanji.any? %>
+      <ul id="unknown-kanji" class="mt-4 grid grid-cols-4 gap-2 sm:grid-cols-6">
+        <% @progress.unknown_kanji.each do |item| %>
+          <li class="rounded-xl border border-zinc-200 px-2 py-3 text-center dark:border-zinc-700" title="<%= item.meaning_summary %>">
+            <div class="text-2xl font-semibold leading-none text-zinc-400 dark:text-zinc-500"><%= item.character %></div>
+            <div class="mt-1 truncate text-[11px] text-zinc-400 dark:text-zinc-500"><%= item.meaning_summary %></div>
+          </li>
+        <% end %>
+      </ul>
+    <% else %>
+      <p class="mt-4 text-sm text-zinc-500 dark:text-zinc-400">You've seen every tracked kanji.</p>
+    <% end %>
+  </details>
+
+  <section aria-labelledby="readable-words-heading" class="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
+    <h2 id="readable-words-heading" class="text-sm font-semibold text-zinc-500 dark:text-zinc-400">
+      Words you can read <span class="ml-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-bold text-green-700 dark:bg-green-950 dark:text-green-300"><%= @progress.readable_words.size %></span>
+    </h2>
+    <p class="mt-1 text-xs text-zinc-500 dark:text-zinc-400">Vocabulary with mastery high enough to recognise in sentences.</p>
+    <% if @progress.readable_words.any? %>
+      <ul id="readable-words" class="mt-4 space-y-2">
+        <% @progress.readable_words.each do |word| %>
+          <li class="flex items-baseline justify-between gap-3 rounded-xl border border-zinc-200 px-3 py-2 dark:border-zinc-700">
+            <div class="min-w-0">
+              <span class="font-semibold"><%= word.surface %></span>
+              <span class="ml-2 text-sm text-zinc-500 dark:text-zinc-400"><%= word.reading %></span>
+            </div>
+            <span class="truncate text-sm text-zinc-500 dark:text-zinc-400"><%= word.meaning %></span>
+          </li>
+        <% end %>
+      </ul>
+    <% else %>
+      <p class="mt-4 text-sm text-zinc-500 dark:text-zinc-400">No words unlocked yet — they appear here once quiz reviews push them over the threshold.</p>
+    <% end %>
+  </section>
+
+  <% if @progress.learning_words.any? %>
+    <details class="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
+      <summary class="cursor-pointer text-sm font-semibold text-zinc-500 dark:text-zinc-400">
+        Words you're still learning <span class="ml-1 rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-bold text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300"><%= @progress.learning_words.size %></span>
+      </summary>
+      <ul id="learning-words" class="mt-4 space-y-2">
+        <% @progress.learning_words.each do |word| %>
+          <li class="flex items-baseline justify-between gap-3 rounded-xl border border-zinc-200 px-3 py-2 dark:border-zinc-700">
+            <div class="min-w-0">
+              <span class="font-semibold"><%= word.surface %></span>
+              <span class="ml-2 text-sm text-zinc-500 dark:text-zinc-400"><%= word.reading %></span>
+            </div>
+            <span class="truncate text-sm text-zinc-500 dark:text-zinc-400"><%= word.meaning %></span>
+          </li>
+        <% end %>
+      </ul>
+    </details>
+  <% end %>
 </div>
