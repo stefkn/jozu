@@ -25,13 +25,14 @@
       <%= hidden_field_tag :response_time_ms, nil, data: { quiz_target: "responseTime" } %>
 
       <div class="grid grid-cols-2 gap-3">
+        <% kanji_options = %w[kana_to_kanji sentence_to_kanji].include?(question.question_type) %>
         <% question.options.each do |option_id, label| %>
           <button type="button"
                   data-action="click->quiz#select"
                   data-quiz-target="option"
                   data-answer="<%= option_id %>"
                   data-correct="<%= option_id == question.correct_option_id %>"
-                  class="flex min-h-20 items-center justify-center rounded-2xl border-2 border-zinc-300 bg-white px-3 py-5 text-lg font-semibold leading-snug break-words shadow-sm transition select-none hover:border-blue-400 hover:bg-blue-50 active:scale-[0.97] active:bg-blue-100 disabled:cursor-default disabled:shadow-none dark:border-zinc-600 dark:bg-zinc-900 dark:hover:border-blue-500 dark:hover:bg-blue-950 dark:active:bg-blue-900">
+                  class="flex min-h-20 items-center justify-center rounded-2xl border-2 border-zinc-300 bg-white px-3 py-5 <%= kanji_options ? "text-2xl" : "text-lg" %> font-semibold leading-snug break-words shadow-sm transition select-none hover:border-blue-400 hover:bg-blue-50 active:scale-[0.97] active:bg-blue-100 disabled:cursor-default disabled:shadow-none dark:border-zinc-600 dark:bg-zinc-900 dark:hover:border-blue-500 dark:hover:bg-blue-950 dark:active:bg-blue-900">
             <%= label %>
           </button>
         <% end %>

@@ -14,7 +14,7 @@
       <div class="rounded-xl border border-zinc-200 bg-white px-4 py-4 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
         <% if detail.is_a?(Learning::OptionDetails::KanjiOption) %>
           <p class="text-base font-semibold">
-            <%= detail.character %>
+            <span class="text-xl"><%= detail.character %></span>
             <% if detail.meaning.present? %>
               <span class="ml-2 text-sm font-normal text-zinc-500 dark:text-zinc-400"><%= detail.meaning %></span>
             <% end %>
@@ -31,7 +31,7 @@
           <% end %>
         <% else %>
           <p class="text-base font-semibold">
-            <%= detail.surface %>
+            <span class="text-xl"><%= detail.surface %></span>
             <span class="ml-2 text-sm font-normal text-zinc-500 dark:text-zinc-400"><%= detail.reading %></span>
           </p>
           <% if detail.meaning.present? %>
