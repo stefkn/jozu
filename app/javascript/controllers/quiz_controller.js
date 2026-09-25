@@ -17,12 +17,13 @@ export default class extends Controller {
 
     this.optionTargets.forEach((option) => {
       option.disabled = true
+      const dark = document.documentElement.classList.contains("dark")
       if (option.dataset.correct === "true") {
         option.style.borderColor = "var(--color-green-500)"
-        option.style.backgroundColor = "var(--color-green-50)"
+        option.style.backgroundColor = dark ? "var(--color-green-950)" : "var(--color-green-50)"
       } else if (option === selected) {
         option.style.borderColor = "var(--color-red-500)"
-        option.style.backgroundColor = "var(--color-red-50)"
+        option.style.backgroundColor = dark ? "var(--color-red-950)" : "var(--color-red-50)"
       } else {
         option.classList.add("opacity-40")
       }
