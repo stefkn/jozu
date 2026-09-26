@@ -115,6 +115,21 @@ html.dark {
   color: var(--color-zinc-400);
 }
 
+/* Progress tile study-notes dialog */
+.kanji-dialog::backdrop {
+  background: rgb(0 0 0 / 0.5);
+}
+
+.kanji-dialog {
+  /* Tailwind's preflight zeroes dialog margins (breaking native centering),
+     so center explicitly instead of relying on the `m-auto` utility. */
+  position: fixed;
+  inset: 0;
+  margin: auto;
+  height: fit-content;
+  max-height: calc(100vh - 2rem);
+}
+
 /* Touch-friendly buttons: no tap-highlight flash */
 button,
 a {
