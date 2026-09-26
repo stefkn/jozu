@@ -17,6 +17,7 @@ Rails.application.routes.draw do
   resource :settings, only: %i[show update], controller: "settings"
 
   get "progress", to: "progress#index"
+  get "progress/:character", to: "progress#show", as: :progress_kanji
 
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.
   get "up" => "rails/health#show", as: :rails_health_check

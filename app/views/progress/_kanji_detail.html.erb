@@ -1,0 +1,39 @@
+<%# Single-kanji study notes, equivalent to the per-option notes shown after
+    answering a sentence_to_kanji review question. Always visible (no quiz
+    controller): Progress tiles link here, either as a full page or loaded
+    into the tile dialog. %>
+<div data-kanji-detail
+     data-controller="kanji-meaning"
+     data-action="click->kanji-meaning#toggle"
+     class="rounded-xl border border-zinc-200 bg-white px-4 py-4 text-left shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
+  <p class="text-base font-semibold">
+    <span class="text-xl"><%= detail.character %></span>
+    <% if detail.meaning.present? %>
+      <span class="ml-2 text-sm font-normal text-zinc-500 dark:text-zinc-400"><%= detail.meaning %></span>
+    <% end %>
+  </p>
+  <% if detail.readings.any? %>
+    <p class="mt-2 flex flex-wrap items-center justify-center gap-2 text-sm">
+      <% detail.readings.each do |r| %>
+        <span class="rounded-md bg-zinc-100 px-2 py-1 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200"
+              title="Commonly used <%= r.kind %>">
+          <%= r.reading %><span class="ml-1.5 text-[10px] font-medium uppercase opacity-60"><%= r.kind == "onyomi" ? "ON" : r.kind == "kunyomi" ? "KUN" : r.kind %></span>
+        </span>
+      <% end %>
+    </p>
+  <% end %>
+
+  <% if detail.examples.any? %>
+    <ul class="mt-3 space-y-2.5 border-t border-zinc-100 pt-3 dark:border-zinc-800">
+      <% detail.examples.each do |ex| %>
+        <li>
+          <p class="study-furigana text-[15px] leading-relaxed"><%= ex.html %></p>
+          <% if ex.translation.present? %>
+            <p class="mt-0.5 text-[13px] text-zinc-500 dark:text-zinc-400"><%= ex.translation %></p>
+          <% end %>
+        </li>
+      <% end %>
+    </ul>
+  <% end %>
+  <div data-kanji-meaning-target="bubble" class="kanji-meaning-bubble"></div>
+</div>

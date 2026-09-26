@@ -1,0 +1,16 @@
+<% content_for :title, "#{@kanji.character} — Progress — Jozu" %>
+
+<div class="mx-auto w-full max-w-md space-y-6">
+  <%= link_to "← Progress", progress_path, class: "inline-block rounded-lg px-2 py-1 text-sm text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100" %>
+
+  <div class="text-center">
+    <p class="text-sm font-medium uppercase tracking-widest text-zinc-400 dark:text-zinc-500">Study notes</p>
+    <% if @mastery %>
+      <p class="mt-1 text-xs text-zinc-500 dark:text-zinc-400">Mastery <%= @mastery.mastery_score&.round(2) %></p>
+    <% else %>
+      <p class="mt-1 text-xs text-zinc-500 dark:text-zinc-400">Not yet seen</p>
+    <% end %>
+  </div>
+
+  <%= render partial: "progress/kanji_detail", locals: { detail: @detail } %>
+</div>
