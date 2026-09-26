@@ -38,16 +38,24 @@ module Learning
         kanji = kanjis[option_id]
         next if kanji.nil?
 
-        words_sorted = sorted_words(kanji.words)
-        KanjiOption.new(
-          option_id:,
-          character: kanji.character,
-          meaning: kanji.meaning_summary,
-          readings: common_readings(kanji, words_sorted),
-          examples: examples_for_kanji(kanji, words_sorted, exclude_sentence_id: question.sentence_id,
-                                       limit: example_limit)
-        )
+        for_kanji(kanji, option_id: option_id, exclude_sentence_id: question.sentence_id,
+                         example_limit:)
       end
+    end
+
+    # Study notes for a single kanji outside of a review question (e.g. the
+    # Progress page tiles). Same content as a sentence_to_kanji option:
+    # meaning, common readings, example sentences with furigana.
+    def self.for_kanji(kanji, option_id: nil, exclude_sentence_id: nil, example_limit: EXAMPLE_LIMIT)
+      words_sorted = sorted_words(Array(kanji.words))
+      KanjiOption.new(
+        option_id: option_id || kanji.id.to_s,
+        character: kanji.character,
+        meaning: kanji.meaning_summary,
+        readings: common_readings(kanji, words_sorted),
+        examples: examples_for_kanji(kanji, words_sorted, exclude_sentence_id:,
+                                     limit: example_limit)
+      )
     end
 
     def self.for_word_options(question, example_limit: EXAMPLE_LIMIT)
