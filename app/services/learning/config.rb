@@ -5,7 +5,8 @@ module Learning
 attr_accessor :slow_ms, :sentence_slow_ms, :fast_ms, :mastery_deltas,
               :frequency_prior_decay, :priority_weights, :new_kanji_per_session,
               :session_review_target, :known_threshold, :recent_exposure_window,
-              :diagnostic_bands, :diagnostic_question_count
+              :diagnostic_bands, :diagnostic_question_count, :confusion_min_count,
+              :confusion_contrast_threshold
 
     def initialize
       @slow_ms = 4_000
@@ -27,6 +28,12 @@ attr_accessor :slow_ms, :sentence_slow_ms, :fast_ms, :mastery_deltas,
       @recent_exposure_window = 48.hours
       @diagnostic_bands = [ [ 0, 40 ], [ 40, 80 ], [ 80, nil ] ]
       @diagnostic_question_count = 40
+      # A (correct, chosen) pair needs this many wrong answers before it counts
+      # as a genuine confusion and gets preferred as a distractor.
+      @confusion_min_count = 1
+      # ... and this many before a due review becomes a focused 2-option
+      # contrast drill (correct vs. the specific confuser).
+      @confusion_contrast_threshold = 2
     end
 
 def slow?(response_time_ms, question_type: nil)
