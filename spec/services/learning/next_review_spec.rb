@@ -149,5 +149,49 @@ RSpec.describe Learning::NextReview do
       served = UserKanji.find(question.reviewable_id)
       expect(served.kanji.character).not_to eq("一")
     end
+
+    it "serves diagnostic-seeded rows that were introduced but never reviewed" do
+      uk = UserKanji.create!(user:, kanji: k["決"], recognition_strength: 0.75,
+                             reading_strength: 0.375, mastery_score: 0.5, times_seen: 1)
+      Learning::Scheduler.new.introduce!(uk, now: now - 1.hour)
+
+      question = described_class.call(user, now:)
+      expect(question).not_to be_nil
+      expect(question.reviewable_id).to eq(uk.id)
+    end
+
+    it "ends the session once the daily quiz review target is reached" do
+      uk = UserKanji.create!(user:, kanji: k["決"])
+      Learning::Scheduler.new.apply!(uk, grade: :again, now: now - 1.hour)
+      10.times do
+        Review.create!(user:, reviewable: uk, question_type: "kana_to_kanji", grade: "good",
+                       presented_at: now, answered_at: now, correct: true)
+      end
+
+      expect(described_class.call(user, now:)).to be_nil
+    end
+
+    it "ignores diagnostic rows when counting toward the session target" do
+      uk = UserKanji.create!(user:, kanji: k["決"])
+      Learning::Scheduler.new.apply!(uk, grade: :again, now: now - 1.hour)
+      10.times do
+        Review.create!(user:, reviewable: uk, question_type: "kanji_recognition", grade: "good",
+                       presented_at: now, answered_at: now, correct: true)
+      end
+
+      expect(described_class.call(user, now:)).not_to be_nil
+    end
+
+    it "ignores the session target in practice mode" do
+      user.set_setting("practice_mode", true)
+      uk = UserKanji.create!(user:, kanji: k["決"])
+      Learning::Scheduler.new.apply!(uk, grade: :again, now: now - 1.hour)
+      10.times do
+        Review.create!(user:, reviewable: uk, question_type: "kana_to_kanji", grade: "good",
+                       presented_at: now, answered_at: now, correct: true)
+      end
+
+      expect(described_class.call(user, now:)).not_to be_nil
+    end
   end
 end

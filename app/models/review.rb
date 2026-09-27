@@ -11,4 +11,8 @@ class Review < ApplicationRecord
   validates :confidence, inclusion: { in: CONFIDENCES }, allow_nil: true
   validates :correct, inclusion: { in: [ true, false ] }
   validates :question_token, uniqueness: true, allow_nil: true
+
+  # Real quiz reviews. Diagnostic rows (kanji_recognition) seed the bank but
+  # must not consume the daily session budget or pad session tallies.
+  scope :quiz, -> { where.not(question_type: "kanji_recognition") }
 end

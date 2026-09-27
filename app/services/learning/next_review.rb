@@ -5,6 +5,10 @@ module Learning
   #   2. New kanji: highest-priority unseen kanji, capped per session.
   #   3. Question type from the item's weakest dimension, constrained to the
   #      multiple-choice recognition/reading/context types.
+  #
+  # Daily sessions are bounded: once quiz reviews answered today reach
+  # session_review_target the session ends (leftovers roll to tomorrow).
+  # Practice mode lifts the cap for unbounded testing sessions.
   class NextReview
     def self.call(user, now: Time.current, config: Learning.config)
       new(now:, config:).call(user)
@@ -17,6 +21,8 @@ module Learning
 
     # @return [Learning::Question, nil] nil when the session is complete.
     def call(user)
+      return nil if session_target_reached?(user)
+
       reviewable = next_due(user)
       if reviewable
         generate_for(user)
@@ -26,6 +32,12 @@ module Learning
     end
 
     private
+
+    def session_target_reached?(user)
+      return false if user.practice_mode?
+
+      Review.quiz.where(user:, created_at: @now.all_day).count >= @config.session_review_target
+    end
 
     def next_due(user)
       due_reviewables(user).min_by { |r| [ r.due_at, r.id ] }
