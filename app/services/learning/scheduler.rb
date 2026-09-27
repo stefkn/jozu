@@ -35,7 +35,8 @@ module Learning
     end
 
     # Persist a review outcome: rebuild the Fsrs::Card from jsonb, schedule the
-    # next interval, and store card + due_at back on the record.
+    # next interval, and store card + due_at back on the record. Well-known,
+    # stable items graduate out of the due queue (see graduate!).
     def apply!(reviewable, grade:, now:)
       card = card_from(reviewable.srs_state)
       rating = RATING_MAP.fetch(grade.to_s)
@@ -47,6 +48,7 @@ module Learning
 
       reviewable.srs_state = next_card.to_h.as_json
       reviewable.due_at = next_card.due
+      graduate!(reviewable, new_interval:, now:)
       reviewable.save!
 
       Result.new(grade: grade.to_s, previous_interval:, new_interval: new_interval.to_f,
@@ -62,7 +64,11 @@ module Learning
     end
 
     # True when the record holds an SRS card that is due for review.
+    # Graduated (stable + well-known) and suspended (manually paused) items
+    # never come due; this is the single choke point, so NextReview, the home
+    # summary and the forecast all honour it.
     def due?(reviewable, now:)
+      return false if reviewable.graduated_at.present? || reviewable.suspended_at.present?
       return false unless reviewable.srs_state.present?
       return false unless %w[learning relearning review].include?(state_name(reviewable))
 
@@ -75,6 +81,18 @@ module Learning
     end
 
     private
+
+    # Retire an item that is both well-known and stable: mastery at/above the
+    # known threshold with an FSRS interval at/above the graduation minimum.
+    # Suspended items never graduate (they are not being drilled). Mastery is
+    # already fresh here — MasteryCalculator.update! runs before apply!.
+    def graduate!(reviewable, new_interval:, now:)
+      return if reviewable.graduated_at.present? || reviewable.suspended_at.present?
+      return unless reviewable.mastery_score >= @config.known_threshold
+      return unless new_interval >= @config.graduation_min_interval.to_i
+
+      reviewable.graduated_at = now
+    end
 
     def card_from(state)
       state.blank? ? Fsrs::Card.new : Fsrs::Card.from_h(state)

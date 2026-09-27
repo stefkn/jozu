@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_25_120001) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_27_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -122,12 +122,14 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_25_120001) do
     t.datetime "created_at", null: false
     t.datetime "due_at"
     t.datetime "first_seen_at"
+    t.datetime "graduated_at"
     t.bigint "kanji_id", null: false
     t.datetime "last_seen_at"
     t.float "mastery_score", default: 0.0
     t.float "reading_strength", default: 0.0
     t.float "recognition_strength", default: 0.0
     t.jsonb "srs_state", default: {}
+    t.datetime "suspended_at"
     t.integer "times_correct", default: 0
     t.integer "times_incorrect", default: 0
     t.integer "times_seen", default: 0
@@ -143,9 +145,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_25_120001) do
     t.datetime "created_at", null: false
     t.datetime "due_at"
     t.datetime "first_seen_at"
+    t.datetime "graduated_at"
     t.datetime "last_seen_at"
     t.float "mastery_score", default: 0.0
     t.jsonb "srs_state", default: {}
+    t.datetime "suspended_at"
     t.integer "times_correct", default: 0
     t.integer "times_incorrect", default: 0
     t.integer "times_seen", default: 0

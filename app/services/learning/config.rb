@@ -6,7 +6,9 @@ attr_accessor :slow_ms, :sentence_slow_ms, :fast_ms, :mastery_deltas,
               :frequency_prior_decay, :priority_weights, :new_kanji_per_session,
               :session_review_target, :known_threshold, :recent_exposure_window,
               :diagnostic_bands, :diagnostic_question_count, :confusion_min_count,
-              :confusion_contrast_threshold
+              :confusion_contrast_threshold, :graduation_min_interval,
+              :leech_min_reviews, :leech_min_failure_rate, :leech_limit,
+              :forecast_days
 
     def initialize
       @slow_ms = 4_000
@@ -34,6 +36,17 @@ attr_accessor :slow_ms, :sentence_slow_ms, :fast_ms, :mastery_deltas,
       # ... and this many before a due review becomes a focused 2-option
       # contrast drill (correct vs. the specific confuser).
       @confusion_contrast_threshold = 2
+      # An item graduates out of the due queue once it is well-known (mastery
+      # at or above known_threshold) and stable (FSRS interval at or beyond
+      # this). Graduation is automatic; the learner can resume reviews manually.
+      @graduation_min_interval = 30.days
+      # Leech definition: at least this many reviews with at least this failure
+      # rate, shown capped at leech_limit, worst first.
+      @leech_min_reviews = 5
+      @leech_min_failure_rate = 0.4
+      @leech_limit = 10
+      # How many days (including today) the home-screen due forecast covers.
+      @forecast_days = 7
     end
 
 def slow?(response_time_ms, question_type: nil)

@@ -15,6 +15,18 @@ RSpec.describe Learning::Session do
     expect(summary.reviews_count).to eq(1)
   end
 
+  it "excludes graduated and suspended items from due reviews" do
+    scheduler = Learning::Scheduler.new
+    %w[決 定].each do |char|
+      uk = UserKanji.create!(user:, kanji: k[char])
+      scheduler.apply!(uk, grade: :again, now: now - 1.hour)
+    end
+    UserKanji.find_by(user:, kanji: k["決"])&.update!(graduated_at: now)
+    UserKanji.find_by(user:, kanji: k["定"])&.update!(suspended_at: now)
+
+    expect(described_class.summary(user, now:).reviews_count).to eq(0)
+  end
+
   it "excludes due number kanji when the user opts out" do
     number = Kanji.create!(character: "一", grade: 1, frequency_rank: 2, meaning_summary: "one")
     uk = UserKanji.create!(user:, kanji: number)

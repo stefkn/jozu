@@ -101,5 +101,53 @@ RSpec.describe Learning::Scheduler do
       scheduler.apply!(user_kanji, grade: :good, now: Time.current)
       expect(scheduler.due?(user_kanji.reload, now: Time.current)).to be false
     end
+
+    it "is false for graduated and suspended items no matter how overdue" do
+      scheduler = described_class.new
+      scheduler.apply!(user_kanji, grade: :good, now: Time.current)
+
+      user_kanji.update!(graduated_at: Time.current)
+      expect(scheduler.due?(user_kanji, now: Time.current + 1.year)).to be false
+
+      user_kanji.update!(graduated_at: nil, suspended_at: Time.current)
+      expect(scheduler.due?(user_kanji, now: Time.current + 1.year)).to be false
+    end
+  end
+
+  describe "graduation" do
+    let(:config) do
+      Learning::Config.new.tap { |c| c.graduation_min_interval = 12.hours }
+    end
+    let(:scheduler) { described_class.new(config:) }
+
+    def strong_kanji(char = "決")
+      UserKanji.create!(user:, kanji: k[char], mastery_score: 0.9,
+                        recognition_strength: 0.9, reading_strength: 0.9, context_strength: 0.9)
+    end
+
+    it "graduates a well-known item once its interval matures" do
+      uk = strong_kanji
+      scheduler.apply!(uk, grade: :easy, now: Time.current)
+      expect(uk.reload.graduated_at).to be_present
+    end
+
+    it "does not graduate a weak item even on a long interval" do
+      uk = UserKanji.create!(user:, kanji: k["決"], mastery_score: 0.1)
+      scheduler.apply!(uk, grade: :easy, now: Time.current)
+      expect(uk.reload.graduated_at).to be_nil
+    end
+
+    it "does not graduate on a short interval" do
+      uk = strong_kanji
+      scheduler.apply!(uk, grade: :good, now: Time.current)
+      expect(uk.reload.graduated_at).to be_nil
+    end
+
+    it "does not graduate a suspended item" do
+      uk = strong_kanji
+      uk.update!(suspended_at: Time.current)
+      scheduler.apply!(uk, grade: :easy, now: Time.current)
+      expect(uk.reload.graduated_at).to be_nil
+    end
   end
 end
