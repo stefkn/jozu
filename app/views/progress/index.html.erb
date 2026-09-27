@@ -48,12 +48,14 @@
       <ul id="leeches" class="mt-4 space-y-2">
         <% @leeches.each do |leech| %>
           <li class="flex items-center justify-between gap-3 rounded-xl border border-zinc-200 px-3 py-2 dark:border-zinc-700">
-            <div class="min-w-0">
-              <span class="text-lg font-semibold"><%= leech.label %></span>
-              <% if leech.sublabel.present? %>
-                <span class="ml-2 text-sm text-zinc-500 dark:text-zinc-400"><%= leech.sublabel %></span>
-              <% end %>
-              <span class="ml-2 truncate text-sm text-zinc-500 dark:text-zinc-400"><%= leech.meaning %></span>
+            <div class="min-w-0 flex-1">
+              <p class="truncate">
+                <span class="text-lg font-semibold"><%= leech.label %></span>
+                <% if leech.sublabel.present? %>
+                  <span class="ml-2 text-sm text-zinc-500 dark:text-zinc-400"><%= leech.sublabel %></span>
+                <% end %>
+                <span class="ml-2 text-sm text-zinc-500 dark:text-zinc-400"><%= leech.meaning %></span>
+              </p>
               <p class="mt-0.5 text-xs text-zinc-400 dark:text-zinc-500">
                 wrong <%= leech.incorrect %> of <%= leech.seen %> · mastery <%= leech.mastery.round(2) %>
                 <% if leech.suspended %><span class="ml-1 font-semibold text-zinc-500 dark:text-zinc-400">· suspended</span><% end %>
@@ -166,12 +168,14 @@
       <ul id="graduated" class="mt-4 space-y-2">
         <% @graduated.each do |item| %>
           <li class="flex items-center justify-between gap-3 rounded-xl border border-zinc-200 px-3 py-2 dark:border-zinc-700">
-            <div class="min-w-0">
-              <span class="text-lg font-semibold"><%= item.label %></span>
-              <% if item.sublabel.present? %>
-                <span class="ml-2 text-sm text-zinc-500 dark:text-zinc-400"><%= item.sublabel %></span>
-              <% end %>
-              <span class="ml-2 truncate text-sm text-zinc-500 dark:text-zinc-400"><%= item.meaning %></span>
+            <div class="min-w-0 flex-1">
+              <p class="truncate">
+                <span class="text-lg font-semibold"><%= item.label %></span>
+                <% if item.sublabel.present? %>
+                  <span class="ml-2 text-sm text-zinc-500 dark:text-zinc-400"><%= item.sublabel %></span>
+                <% end %>
+                <span class="ml-2 text-sm text-zinc-500 dark:text-zinc-400"><%= item.meaning %></span>
+              </p>
             </div>
             <%= button_to "Resume reviews", graduation_path(item.reviewable_id, type: item.kind), method: :delete, class: "shrink-0 rounded-lg border border-zinc-300 px-3 py-1.5 text-xs font-semibold text-zinc-700 hover:bg-zinc-100 dark:border-zinc-600 dark:text-zinc-200 dark:hover:bg-zinc-800" %>
           </li>
@@ -220,7 +224,7 @@
               <span class="font-semibold"><%= word.surface %></span>
               <span class="ml-2 text-sm text-zinc-500 dark:text-zinc-400"><%= word.reading %></span>
             </div>
-            <span class="truncate text-sm text-zinc-500 dark:text-zinc-400"><%= word.meaning %></span>
+            <span class="min-w-0 truncate text-sm text-zinc-500 dark:text-zinc-400"><%= word.meaning %></span>
           </li>
         <% end %>
       </ul>
@@ -241,7 +245,7 @@
               <span class="font-semibold"><%= word.surface %></span>
               <span class="ml-2 text-sm text-zinc-500 dark:text-zinc-400"><%= word.reading %></span>
             </div>
-            <span class="truncate text-sm text-zinc-500 dark:text-zinc-400"><%= word.meaning %></span>
+            <span class="min-w-0 truncate text-sm text-zinc-500 dark:text-zinc-400"><%= word.meaning %></span>
           </li>
         <% end %>
       </ul>
