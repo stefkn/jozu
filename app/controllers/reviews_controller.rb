@@ -30,6 +30,8 @@ class ReviewsController < ApplicationController
       question_type: question.question_type,
       grade:,
       distractors: question.distractors,
+      answer_id: review_params[:answer_id],
+      correct_option_id: question.correct_option_id,
       presented_at: question.presented_at,
       answered_at: now,
       correct:,

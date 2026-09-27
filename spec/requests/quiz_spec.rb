@@ -37,6 +37,8 @@ RSpec.describe "Quiz flow", type: :request do
     expect(review.grade).to eq("good")
     expect(review.question_token).to eq(token)
     expect(review.distractors).to eq(question.distractors)
+    expect(review.answer_id.to_s).to eq(correct_answer.to_s)
+    expect(review.correct_option_id.to_s).to eq(question.correct_option_id.to_s)
   end
 
   it "records the mastery update on the review row" do
@@ -97,6 +99,8 @@ RSpec.describe "Quiz flow", type: :request do
     review = Review.last
     expect(review.correct).to be false
     expect(review.grade).to eq("again")
+    expect(review.answer_id.to_s).to eq(wrong_answer.to_s)
+    expect(review.correct_option_id.to_s).to eq(question.correct_option_id.to_s)
   end
 
   it "records a sentence exposure when answering a sentence_to_kanji question" do
