@@ -30,6 +30,27 @@
     <% end %>
   </div>
 
+  <div class="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
+    <h2 class="text-sm font-semibold text-zinc-500 dark:text-zinc-400">Coming up</h2>
+    <p class="mt-1 text-xs text-zinc-500 dark:text-zinc-400">Expected reviews — an early or late session reshuffles these.</p>
+    <ol class="mt-4 grid grid-cols-7 gap-1 text-center">
+      <% @forecast.days.each_with_index do |day, i| %>
+        <li class="rounded-xl px-1 py-2 <%= i.zero? ? "bg-blue-50 dark:bg-blue-950" : "" %>"
+            title="<%= day.date.strftime("%a %b %-d") %>: <%= day.count %> expected">
+          <div class="text-[11px] font-medium uppercase <%= i.zero? ? "text-blue-600 dark:text-blue-400" : "text-zinc-400 dark:text-zinc-500" %>">
+            <%= i.zero? ? "Today" : day.date.strftime("%a")[0] %>
+          </div>
+          <div class="mt-0.5 text-lg font-bold <%= day.count.positive? ? "text-zinc-900 dark:text-zinc-100" : "text-zinc-300 dark:text-zinc-600" %>">
+            <%= day.count %>
+          </div>
+        </li>
+      <% end %>
+    </ol>
+    <% if @forecast.later_count.positive? %>
+      <p class="mt-3 text-center text-xs text-zinc-500 dark:text-zinc-400">+ <%= @forecast.later_count %> more beyond this week</p>
+    <% end %>
+  </div>
+
   <p class="text-center text-xs text-zinc-400 dark:text-zinc-500">
     A session takes about 2–5 minutes.
   </p>
