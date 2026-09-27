@@ -136,6 +136,10 @@ def start(user)
       word.word_kanji.map(&:kanji).uniq.each do |kanji|
         user_kanji = UserKanji.find_or_initialize_by(user:, kanji:)
         user_kanji.recognition_strength = correct ? 0.75 : 0.20
+        # The flashcard (surface → reading) directly tests reading knowledge,
+        # so seed it at half the recognition prior — same ratio as the
+        # BackfillReadingStrength migration for pre-existing rows.
+        user_kanji.reading_strength = user_kanji.recognition_strength * 0.5
         user_kanji.mastery_score = user_kanji.recompute_mastery
         user_kanji.times_seen += 1
         user_kanji.save!

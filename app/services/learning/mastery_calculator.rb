@@ -6,6 +6,7 @@ module Learning
   #
   # Question types update exactly one dimension (plan §5.1):
   #   kana_to_kanji / kanji_to_meaning  -> recognition_strength
+  #   kanji_to_reading                  -> reading_strength
   #   sentence_to_kanji                 -> context_strength
   class MasteryCalculator
     Result = Data.define(:previous_mastery, :new_mastery)
@@ -13,6 +14,7 @@ module Learning
     QUESTION_DIMENSIONS = {
       "kana_to_kanji" => :recognition_strength,
       "kanji_to_meaning" => :recognition_strength,
+      "kanji_to_reading" => :reading_strength,
       "sentence_to_kanji" => :context_strength
     }.freeze
 

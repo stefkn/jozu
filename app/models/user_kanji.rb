@@ -21,6 +21,11 @@ class UserKanji < ApplicationRecord
   end
 
   def weak_dimension
-    [ %i[recognition_strength recognition], %i[context_strength context] ].min_by { |attr, _| send(attr) }[1]
+    strengths = {
+      recognition: recognition_strength,
+      reading: reading_strength,
+      context: context_strength
+    }
+    strengths.min_by { |_, value| value }[0]
   end
 end

@@ -1,6 +1,7 @@
 module ApplicationHelper
   QUESTION_TYPE_LABELS = {
     "kana_to_kanji" => "Choose the kanji",
+    "kanji_to_reading" => "Choose the reading",
     "sentence_to_kanji" => "Choose the kanji",
     "kanji_to_meaning" => "Choose the meaning"
   }.freeze

@@ -27,6 +27,14 @@ RSpec.describe Learning::MasteryCalculator do
       end
     end
 
+    it "maps kanji_to_reading to the reading dimension" do
+      uk = UserKanji.create!(user:, kanji: k["定"])
+      Learning::MasteryCalculator.new.update!(uk, question_type: "kanji_to_reading",
+                                             correct: true, confidence: "knew", now: Time.current)
+      expect(uk.reload.reading_strength).to be_within(0.001).of(0.14)
+      expect(uk.mastery_score).to be_within(0.001).of(0.14 * 0.2)
+    end
+
     it "clamps the strength to [0, 1]" do
       uk = UserKanji.create!(user:, kanji: k["必"], context_strength: 0.99)
       Learning::MasteryCalculator.new.update!(uk, question_type: "sentence_to_kanji",

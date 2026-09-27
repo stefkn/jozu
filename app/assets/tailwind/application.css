@@ -97,15 +97,16 @@ html.dark {
   display: block;
 }
 
-/* Study-note example sentences: furigana always visible (unlike the main
-   prompt, where readings are recalled). Tapping still reveals the English
-   meaning via the kanji-meaning bubble. */
+/* Study-note example sentences: furigana always visible above the kanji
+   (unlike the main prompt, where readings are recalled). `rt` keeps its
+   native ruby layout — never `display: inline`, which renders the reading
+   inline after the base text, especially on mobile. Tapping still reveals
+   the English meaning via the kanji-meaning bubble. */
 .study-furigana ruby {
   ruby-position: over;
 }
 
 .study-furigana ruby rt {
-  display: inline;
   font-size: 0.6em;
   font-weight: 500;
   color: var(--color-zinc-500);

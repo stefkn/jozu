@@ -54,6 +54,39 @@ RSpec.describe Learning::NextReview do
       expect(question.reviewable_id).to eq(uk.id)
     end
 
+    it "routes to the weakest dimension: reading -> kanji_to_reading" do
+      uk = UserKanji.create!(user:, kanji: k["決"], times_seen: 3,
+                             recognition_strength: 0.8, reading_strength: 0.1, context_strength: 0.7)
+      Learning::Scheduler.new.apply!(uk, grade: :good, now: now - 2.days)
+
+      question = described_class.call(user, now:)
+      expect(question.reviewable_id).to eq(uk.id)
+      expect(question.question_type).to eq("kanji_to_reading")
+    end
+
+    it "routes to the weakest dimension: recognition -> kana_to_kanji, context -> sentence_to_kanji" do
+      scheduler = Learning::Scheduler.new
+      rec_weak = UserKanji.create!(user:, kanji: k["決"], times_seen: 3,
+                                  recognition_strength: 0.1, reading_strength: 0.8, context_strength: 0.7)
+      scheduler.apply!(rec_weak, grade: :good, now: now - 3.days)
+      ctx_weak = UserKanji.create!(user:, kanji: k["必"], times_seen: 3,
+                                  recognition_strength: 0.8, reading_strength: 0.7, context_strength: 0.1)
+      scheduler.apply!(ctx_weak, grade: :good, now: now - 1.day)
+
+      first = described_class.call(user, now:)
+      expect(first.reviewable_id).to eq(rec_weak.id)
+      expect(first.question_type).to eq("kana_to_kanji")
+
+      # Answer it (push recognition above reading/context is unnecessary here);
+      # the next due item routes to sentence_to_kanji.
+      Learning::MasteryCalculator.new.update!(rec_weak, question_type: "kana_to_kanji",
+                                             correct: true, confidence: "knew", now:)
+      scheduler.apply!(rec_weak, grade: :good, now:)
+      second = described_class.call(user, now:)
+      expect(second.reviewable_id).to eq(ctx_weak.id)
+      expect(second.question_type).to eq("sentence_to_kanji")
+    end
+
     it "picks the earliest-due review when several are due" do
       early = UserKanji.create!(user:, kanji: k["決"])
       later = UserKanji.create!(user:, kanji: k["必"])

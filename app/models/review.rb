@@ -1,5 +1,5 @@
 class Review < ApplicationRecord
-  QUESTION_TYPES = %w[kana_to_kanji sentence_to_kanji kanji_to_meaning kanji_recognition].freeze
+  QUESTION_TYPES = %w[kana_to_kanji sentence_to_kanji kanji_to_meaning kanji_to_reading kanji_recognition].freeze
   GRADES = %w[again hard good easy].freeze
   CONFIDENCES = %w[instant knew thought guessed unknown].freeze
 

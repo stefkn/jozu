@@ -1,6 +1,7 @@
 module Learning
-  # Study details for each answer option on "Choose the kanji" questions
-  # (kana_to_kanji + sentence_to_kanji). Rendered hidden with the question and
+  # Study details for each answer option on word-option questions
+  # (kana_to_kanji + kanji_to_reading) and kanji-option questions
+  # (sentence_to_kanji). Rendered hidden with the question and
   # revealed by the quiz controller after the learner picks an answer, so the
   # info never gives away the answer up front.
   #
@@ -26,7 +27,7 @@ module Learning
     def self.for_question(question, example_limit: EXAMPLE_LIMIT)
       case question.question_type
       when "sentence_to_kanji" then for_kanji_options(question, example_limit:)
-      when "kana_to_kanji" then for_word_options(question, example_limit:)
+      when "kana_to_kanji", "kanji_to_reading" then for_word_options(question, example_limit:)
       else []
       end
     end

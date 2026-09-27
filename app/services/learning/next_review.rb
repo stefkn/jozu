@@ -4,7 +4,7 @@ module Learning
   #   1. Reviews first: earliest due SRS item (user_kanji or user_word).
   #   2. New kanji: highest-priority unseen kanji, capped per session.
   #   3. Question type from the item's weakest dimension, constrained to the
-  #      three Plan A types.
+  #      multiple-choice recognition/reading/context types.
   class NextReview
     def self.call(user, now: Time.current, config: Learning.config)
       new(now:, config:).call(user)
@@ -90,16 +90,17 @@ module Learning
       return "kana_to_kanji" if reviewable.is_a?(UserWord)
       return "kanji_to_meaning" if reviewable.times_seen.zero?
 
-      if reviewable.context_strength <= reviewable.recognition_strength
-        "sentence_to_kanji"
-      else
-        "kana_to_kanji"
+      case reviewable.weak_dimension
+      when :context then "sentence_to_kanji"
+      when :reading then "kanji_to_reading"
+      else "kana_to_kanji"
       end
     end
 
     def fallback_type(type)
       { "sentence_to_kanji" => "kana_to_kanji",
         "kana_to_kanji" => "sentence_to_kanji",
+        "kanji_to_reading" => "kana_to_kanji",
         "kanji_to_meaning" => "kana_to_kanji" }.fetch(type, "kana_to_kanji")
     end
 
