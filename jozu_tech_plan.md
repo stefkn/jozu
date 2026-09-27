@@ -200,8 +200,10 @@ If the Tailscale IP changes, update that file (or set `DEV_ALLOWED_HOST`).
 
 ### Known limitations / next steps
 
-- Only the 3 Plan A question types exist; `reading_strength` is seeded but not
-  drilled (§5.1). No kanji→reading questions yet.
+- Four question types exist (kana→kanji, kanji→reading, sentence→kanji,
+  kanji→meaning); all three `UserKanji` dimensions are drilled (§5.1).
+  Confusion pairs are mined from `reviews.answer_id`/`correct_option_id` and
+  bias distractor selection.
 - The kanji bank is now ~1,958 (top-500 + the difficulty-budget closure over the
   full vocabulary), so `sentence_to_kanji` coverage is high; the ~35 kanji used
   by sentences but beyond the rank-2000 budget (凄, 勿, …) stay unbanked, and
@@ -244,6 +246,38 @@ Priority order for finishing the MVP:
    - Basic auth, only if someone other than the demo user will use the app.
 4. **Explicitly deferred to Plan B:** reading stream, offline quiz queue,
    confusion-network distractors, FSRS parameter optimization.
+
+### Learning-loop review (2026-09-25, auth explicitly out of scope)
+
+Analysis of the live loop (`NextReview → QuestionGenerator → quiz → Review →
+`MasteryCalculator + Scheduler`) surfaced five gaps, in priority order:
+
+1. **Confusion learning stored but never used (DONE 2026-09-25).**
+   `reviews` now persists `answer_id` + `correct_option_id`;
+   `Learning::ConfusionPairs` mines (correct, chosen) pairs and
+   `DistractorSelector` (with `user:`) prefers historical confusers, resolving
+   labels directly from the bank so pool evolution can't drop them. A spiking
+   pair (wrong × `confusion_contrast_threshold`, default 2) turns the next due
+   review into a focused 2-option contrast drill (same question_type, single
+   distractor, `Question#drill?` label in the quiz UI); drills keep base-type
+   mastery/SRS and are identifiable by a single-entry `distractors` array.
+2. **Dead `reading_strength` (DONE 2026-09-25).** New `kanji_to_reading`
+   type (prompt = word surface, options = readings of confusable words,
+   same-reading/dup-label guards) maps to `:reading_strength` in
+   `MasteryCalculator`, routes via `UserKanji#weak_dimension` in `NextReview`,
+   and seeds at 0.5× recognition in the diagnostic +
+   `BackfillReadingStrength` for existing rows (mastery recomputed).
+3. **Paste-your-text radar → `personal_relevance`.** Reuse longest-match
+   segmentation + word knownness to report "% kanji recognised" and top
+   candidates with one-click "add to queue"; feeds the stubbed
+   `personal_relevance` multiplier in `PriorityCalculator`.
+4. **Minimal reading stream + stop-drilling.** Reuse `Furigana` tap-reveal +
+   `exposures` for 3–5 sentence reads with lightweight `context_strength`
+   bumps; graduate stable kanji out of the explicit due queue (concept
+   §13/§17/§20).
+5. **Learning-health analytics.** Retention by question type, leech list, due
+   forecast, confidence calibration — all readable from `reviews`; needed to
+   tune `Learning::Config` with evidence.
 
 ---
 
@@ -598,10 +632,11 @@ Question types update exactly one dimension:
 |---|---|
 | kana_to_kanji | recognition |
 | kanji_to_meaning | recognition (meaning leg) |
+| kanji_to_reading | reading |
 | sentence_to_kanji | context |
 
-`reading_strength` is seeded by the diagnostic and by word readings but **not yet**
-drilled in Plan A (the concept defers reading questions — §22 lists only 3 types).
+`reading_strength` is drilled by `kanji_to_reading` questions (added
+2026-09-25; previously seeded but never drilled).
 
 ### 5.2 Update rule (`Learning::MasteryCalculator`)
 
@@ -719,8 +754,9 @@ Deterministic single-call "what's next":
    `user_words` with an SRS card in state `LEARNING/REVIEW/RELEARNING`.
 2. **New kanji:** if no reviews due (or fewer than session target), take the highest
    `priority` kanji with no `user_kanji` row yet (limit 3 per session — concept §21).
-3. Choose question type from the item's weakest dimension (concept §8), constrained to
-   the 3 Plan A types:
+3. Choose question type from the item's weakest dimension (concept §8),
+   across kana_to_kanji / kanji_to_reading / sentence_to_kanji
+   (kanji_to_meaning for first exposure of a new kanji):
    - `kanji_to_meaning` for first exposure of a new kanji (initial acquisition).
    - otherwise `sentence_to_kanji` (context) if `context_strength` is lowest.
    - else `kana_to_kanji` (recognition).
@@ -740,7 +776,10 @@ Deterministic single-call "what's next":
 ### 8.3 Distractors (`Learning::DistractorSelector`)
 
 For each question type, pool candidates then pick 3 distinct plausible distractors
-(concept §9):
+(concept §9). When the learner has history (`user:` passed), their own
+frequent confusers (`Learning::ConfusionPairs`, mined from
+`reviews.answer_id`/`correct_option_id`) are preferred over static-pool
+options:
 
 ```ruby
 # kana_to_kanji: words sharing the same reading; else words sharing first char or
@@ -974,8 +1013,8 @@ ranks for words (the dataset has no BCCWJ ranks); PWA ships as a nice-to-have.
 | Segmentation | Longest-match trie | Sudachi/mecab tokenizer, real `sentence_words` boundaries |
 | SRS | `fsrs` gem, default params | FSRS parameter optimization on this learner's `reviews` |
 | Priority | freq × leverage × uncertainty | + personal_relevance, + prerequisite_bonus |
-| Question types | kana→kanji, sentence→kanji, kanji→meaning | + kanji→reading, contextual recognition, contrast questions |
-| Distractors | static pools (reading/radical) | confusion-network-learned distractors + deliberate contrast |
+| Question types | kana→kanji, kanji→reading, sentence→kanji, kanji→meaning (+ contrast drills) | + contextual recognition |
+| Distractors | static pools + historical-confuser preference + spike-triggered 2-option drills | — |
 | Exposure | dedupe only | passive/reading weighting (§13 of concept), lifecycle states, "stop drilling" recommendation |
 | Reading | none | reading stream + tap-for-detail (concept §17) |
 | Imported text | none | kanji radar / pasted-text analysis (concept §19) |
