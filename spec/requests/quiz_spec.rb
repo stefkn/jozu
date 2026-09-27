@@ -123,6 +123,25 @@ RSpec.describe "Quiz flow", type: :request do
     expect(Exposure.where(user:, kind: "sentence").last.sentence_id).to eq(question.sentence_id)
   end
 
+  it "serves a 2-option contrast drill when a confusion pair spikes" do
+    uk = UserKanji.create!(user:, kanji: k["決"], times_seen: 3,
+                           recognition_strength: 0.8, reading_strength: 0.8, context_strength: 0.0)
+    Learning::Scheduler.new.apply!(uk, grade: :good, now: Time.current - 2.days)
+    2.times do
+      Review.create!(
+        user:, reviewable: uk, question_type: "sentence_to_kanji", grade: "again",
+        distractors: [ k["持"].id ], answer_id: k["持"].id.to_s,
+        correct_option_id: k["決"].id.to_s,
+        presented_at: Time.current, answered_at: Time.current, correct: false
+      )
+    end
+
+    get next_sessions_path
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("Contrast drill")
+    expect(response.body.scan(/data-answer="/).size).to eq(2)
+  end
+
   it "serves the session-complete card when the session ends" do
     scheduler = Learning::Scheduler.new
     %w[決 必 要].each do |char|

@@ -67,14 +67,71 @@ RSpec.describe Learning::DistractorSelector do
                                                 exclude_ids: [ kanji.id ], count: 3, random:)
         expect(sentence_d.size).to be >= 1, "no sentence_to_kanji distractor for #{kanji.character}"
         meaning_d = described_class.select_for(question_type: "kanji_to_meaning", target: kanji,
-                                               exclude_ids: [ kanji.id ], count: 3, random:)
+                                                exclude_ids: [ kanji.id ], count: 3, random:)
         expect(meaning_d.size).to be >= 1, "no kanji_to_meaning distractor for #{kanji.character}"
       end
       @w.each_value do |word|
         d = described_class.select_for(question_type: "kana_to_kanji", target: word,
                                        exclude_ids: [ word.id ], count: 3, random:)
         expect(d.size).to be >= 1, "no kana_to_kanji distractor for #{word.surface}"
+        r = described_class.select_for(question_type: "kanji_to_reading", target: word,
+                                       exclude_ids: [ word.id ], count: 3, random:)
+        expect(r.size).to be >= 1, "no kanji_to_reading distractor for #{word.surface}"
       end
+    end
+
+    it "labels kanji_to_reading distractors with readings, never the target reading twice" do
+      @w.each_value do |word|
+        distractors = described_class.select_for(question_type: "kanji_to_reading", target: word,
+                                                 exclude_ids: [ word.id ], count: 3, random:)
+        labels = distractors.map(&:last)
+        expect(labels.uniq.size).to eq(labels.size)
+        expect(labels).not_to include(word.reading)
+      end
+    end
+  end
+
+  describe "confusion-aware selection (user:)" do
+    let(:user) { make_user }
+
+    def record_confusion(target_id, chosen_id, type: "sentence_to_kanji", times: 1)
+      uk = UserKanji.find_or_create_by!(user:, kanji: k["決"])
+      times.times do
+        Review.create!(
+          user:, reviewable: uk, question_type: type, grade: "again",
+          distractors: [ chosen_id ], answer_id: chosen_id.to_s,
+          correct_option_id: target_id.to_s,
+          presented_at: Time.current, answered_at: Time.current, correct: false
+        )
+      end
+    end
+
+    it "prefers the user's historical confuser over static-pool options" do
+      record_confusion(k["決"].id, k["持"].id)
+      distractors = described_class.select_for(question_type: "sentence_to_kanji", target: k["決"],
+                                               exclude_ids: [ k["決"].id ], count: 3,
+                                               random:, user:)
+      expect(distractors.first.first.to_s).to eq(k["持"].id.to_s)
+    end
+
+    it "keeps static behavior without a user" do
+      record_confusion(k["決"].id, k["持"].id)
+      args = { question_type: "sentence_to_kanji", target: k["決"],
+               exclude_ids: [ k["決"].id ], count: 3 }
+      first = described_class.select_for(**args, random: Random.new(7))
+      second = described_class.select_for(**args, random: Random.new(7))
+      expect(first).to eq(second)
+
+      with_user = described_class.select_for(**args, random: Random.new(7), user:)
+      expect(with_user.map { |id, _| id.to_s }).to include(k["持"].id.to_s)
+    end
+
+    it "ignores confusers that are excluded or no longer plausible" do
+      record_confusion(k["決"].id, k["持"].id)
+      distractors = described_class.select_for(question_type: "sentence_to_kanji", target: k["決"],
+                                               exclude_ids: [ k["決"].id, k["持"].id ], count: 3,
+                                               random:, user:)
+      expect(distractors.map { |id, _| id.to_s }).not_to include(k["持"].id.to_s)
     end
   end
 end
