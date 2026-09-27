@@ -39,6 +39,42 @@
     <p class="mt-1 text-xs text-zinc-500 dark:text-zinc-400">words you know well enough to read</p>
   </div>
 
+  <% if @leeches.any? %>
+    <section aria-labelledby="leeches-heading" class="rounded-2xl border border-red-200 bg-white p-6 shadow-sm dark:border-red-900 dark:bg-zinc-900">
+      <h2 id="leeches-heading" class="text-sm font-semibold text-zinc-500 dark:text-zinc-400">
+        Needs attention <span class="ml-1 rounded-full bg-red-100 px-2 py-0.5 text-xs font-bold text-red-700 dark:bg-red-950 dark:text-red-300"><%= @leeches.size %></span>
+      </h2>
+      <p class="mt-1 text-xs text-zinc-500 dark:text-zinc-400">Your most-missed items. Suspend one to stop drilling it, or open its study notes for a refresher.</p>
+      <ul id="leeches" class="mt-4 space-y-2">
+        <% @leeches.each do |leech| %>
+          <li class="flex items-center justify-between gap-3 rounded-xl border border-zinc-200 px-3 py-2 dark:border-zinc-700">
+            <div class="min-w-0">
+              <span class="text-lg font-semibold"><%= leech.label %></span>
+              <% if leech.sublabel.present? %>
+                <span class="ml-2 text-sm text-zinc-500 dark:text-zinc-400"><%= leech.sublabel %></span>
+              <% end %>
+              <span class="ml-2 truncate text-sm text-zinc-500 dark:text-zinc-400"><%= leech.meaning %></span>
+              <p class="mt-0.5 text-xs text-zinc-400 dark:text-zinc-500">
+                wrong <%= leech.incorrect %> of <%= leech.seen %> · mastery <%= leech.mastery.round(2) %>
+                <% if leech.suspended %><span class="ml-1 font-semibold text-zinc-500 dark:text-zinc-400">· suspended</span><% end %>
+              </p>
+            </div>
+            <div class="flex shrink-0 items-center gap-2">
+              <% if leech.character %>
+                <%= link_to "Study notes", progress_kanji_path(leech.character), class: "rounded-lg px-3 py-1.5 text-xs font-semibold text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-950" %>
+              <% end %>
+              <% if leech.suspended %>
+                <%= button_to "Resume", suspension_path(leech.reviewable_id, type: leech.kind), method: :delete, class: "rounded-lg border border-zinc-300 px-3 py-1.5 text-xs font-semibold text-zinc-700 hover:bg-zinc-100 dark:border-zinc-600 dark:text-zinc-200 dark:hover:bg-zinc-800" %>
+              <% else %>
+                <%= button_to "Suspend", suspensions_path(type: leech.kind, id: leech.reviewable_id), class: "rounded-lg border border-zinc-300 px-3 py-1.5 text-xs font-semibold text-zinc-700 hover:bg-zinc-100 dark:border-zinc-600 dark:text-zinc-200 dark:hover:bg-zinc-800" %>
+              <% end %>
+            </div>
+          </li>
+        <% end %>
+      </ul>
+    </section>
+  <% end %>
+
   <section aria-labelledby="readable-kanji-heading" class="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
     <h2 id="readable-kanji-heading" class="text-sm font-semibold text-zinc-500 dark:text-zinc-400">
       Characters you can read <span class="ml-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-bold text-green-700 dark:bg-green-950 dark:text-green-300"><%= @progress.known %></span>
@@ -120,6 +156,29 @@
       <p class="mt-4 text-sm text-zinc-500 dark:text-zinc-400">No weak characters — nice.</p>
     <% end %>
   </section>
+
+  <% if @graduated.any? %>
+    <details class="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
+      <summary class="cursor-pointer text-sm font-semibold text-zinc-500 dark:text-zinc-400">
+        Graduated <span class="ml-1 rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-bold text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300"><%= @graduated.size %></span>
+      </summary>
+      <p class="mt-1 text-xs text-zinc-500 dark:text-zinc-400">Stable, well-known items retired from reviews. Resume one to put it back in the queue.</p>
+      <ul id="graduated" class="mt-4 space-y-2">
+        <% @graduated.each do |item| %>
+          <li class="flex items-center justify-between gap-3 rounded-xl border border-zinc-200 px-3 py-2 dark:border-zinc-700">
+            <div class="min-w-0">
+              <span class="text-lg font-semibold"><%= item.label %></span>
+              <% if item.sublabel.present? %>
+                <span class="ml-2 text-sm text-zinc-500 dark:text-zinc-400"><%= item.sublabel %></span>
+              <% end %>
+              <span class="ml-2 truncate text-sm text-zinc-500 dark:text-zinc-400"><%= item.meaning %></span>
+            </div>
+            <%= button_to "Resume reviews", graduation_path(item.reviewable_id, type: item.kind), method: :delete, class: "shrink-0 rounded-lg border border-zinc-300 px-3 py-1.5 text-xs font-semibold text-zinc-700 hover:bg-zinc-100 dark:border-zinc-600 dark:text-zinc-200 dark:hover:bg-zinc-800" %>
+          </li>
+        <% end %>
+      </ul>
+    </details>
+  <% end %>
 
   <details class="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
     <summary class="cursor-pointer text-sm font-semibold text-zinc-500 dark:text-zinc-400">

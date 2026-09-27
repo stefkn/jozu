@@ -1,6 +1,8 @@
 class ProgressController < ApplicationController
   def index
     @progress = Learning::Progress.call(current_user)
+    @leeches = Learning::Leeches.call(current_user)
+    @graduated = Learning::Leeches.graduated(current_user)
   end
 
   def show

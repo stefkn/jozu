@@ -19,6 +19,9 @@ Rails.application.routes.draw do
   get "progress", to: "progress#index"
   get "progress/:character", to: "progress#show", as: :progress_kanji
 
+  resources :suspensions, only: %i[create destroy]
+  resources :graduations, only: %i[destroy]
+
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.
   get "up" => "rails/health#show", as: :rails_health_check
 
