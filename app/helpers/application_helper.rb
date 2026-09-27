@@ -9,4 +9,8 @@ module ApplicationHelper
   def question_type_label(type)
     QUESTION_TYPE_LABELS.fetch(type, type)
   end
+
+  def session_progress(user = current_user)
+    Learning::SessionProgress.call(user)
+  end
 end

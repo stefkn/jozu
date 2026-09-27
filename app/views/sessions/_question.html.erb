@@ -2,6 +2,7 @@
   <div class="mx-auto w-full max-w-md space-y-6 text-center"
        data-controller="quiz"
        data-quiz-presented-at="<%= (question.presented_at.to_f * 1000).to_i %>">
+    <%= render partial: "sessions/progress" %>
     <p class="text-sm font-medium uppercase tracking-widest text-zinc-400 dark:text-zinc-500">
       <%= question.drill? ? "Contrast drill" : question_type_label(question.question_type) %>
     </p>
