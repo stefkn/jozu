@@ -14,7 +14,7 @@ module Learning
       end
     end
 
-    ELIGIBLE_STATES = %w[learning relearning review].freeze
+    ELIGIBLE_STATES = %w[new learning relearning review].freeze
 
     def self.call(user, days: nil, now: Time.current, config: Learning.config)
       new(now:, config:).call(user, days: days || config.forecast_days)

@@ -112,6 +112,12 @@ RSpec.describe Learning::Scheduler do
       user_kanji.update!(graduated_at: nil, suspended_at: Time.current)
       expect(scheduler.due?(user_kanji, now: Time.current + 1.year)).to be false
     end
+
+    it "is true for a freshly introduced card once it is due" do
+      scheduler = described_class.new
+      scheduler.introduce!(user_kanji, now: Time.current - 1.hour)
+      expect(scheduler.due?(user_kanji.reload, now: Time.current)).to be true
+    end
   end
 
   describe "graduation" do

@@ -66,11 +66,12 @@ module Learning
     # True when the record holds an SRS card that is due for review.
     # Graduated (stable + well-known) and suspended (manually paused) items
     # never come due; this is the single choke point, so NextReview, the home
-    # summary and the forecast all honour it.
+    # summary and the forecast all honour it. Freshly introduced cards (state
+    # "new", due immediately) count as due — that is what introduce! means.
     def due?(reviewable, now:)
       return false if reviewable.graduated_at.present? || reviewable.suspended_at.present?
       return false unless reviewable.srs_state.present?
-      return false unless %w[learning relearning review].include?(state_name(reviewable))
+      return false unless %w[new learning relearning review].include?(state_name(reviewable))
 
       reviewable.due_at && reviewable.due_at <= now
     end
