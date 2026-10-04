@@ -16,7 +16,7 @@ module Learning
       Summary.new(
         reviews_count: due_count(user),
         new_kanji_count: new_kanji_count(user),
-        reading_count: 0
+        reading_count: reading_count(user)
       )
     end
 
@@ -42,6 +42,14 @@ module Learning
         remaining_slots = [ @config.new_kanji_per_session - introduced_today, 0 ].max
         fresh + [ remaining_slots, extra_eligible ].min
       end
+    end
+
+    # 1 when a short reading is available, else 0. Cheap existence check so
+    # the home screen stays fast even on a large sentence bank.
+    def reading_count(user)
+      ReadingPassage.available?(user, config: @config) ? 1 : 0
+    rescue StandardError
+      0
     end
   end
 end

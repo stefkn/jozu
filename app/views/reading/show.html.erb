@@ -1,0 +1,38 @@
+<% content_for :title, "Short reading — Jozu" %>
+
+<div class="space-y-6">
+  <h1 class="text-2xl font-bold">Short reading</h1>
+  <p class="text-sm text-zinc-500 dark:text-zinc-400">
+    Sentences made mostly of words you already know. Tap any word to reveal its reading, then mark the passage as read.
+  </p>
+
+  <% if @passages.any? %>
+    <div class="space-y-4" data-controller="kanji-meaning" data-action="click->kanji-meaning#toggle">
+      <% @passages.each do |passage| %>
+        <div class="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
+          <p class="study-furigana text-lg leading-relaxed"><%= passage.html %></p>
+          <% if passage.sentence.translation.present? %>
+            <p class="mt-2 text-sm text-zinc-500 dark:text-zinc-400"><%= passage.sentence.translation %></p>
+          <% end %>
+        </div>
+      <% end %>
+      <div data-kanji-meaning-target="bubble" class="kanji-meaning-bubble"></div>
+    </div>
+
+    <%= form_with url: complete_reading_path, method: :post, class: "space-y-3" do %>
+      <% @passages.each do |passage| %>
+        <%= hidden_field_tag "sentence_ids[]", passage.sentence.id %>
+      <% end %>
+      <%= submit_tag "I read this",
+        class: "block w-full cursor-pointer rounded-xl bg-blue-600 px-4 py-4 text-center text-lg font-semibold text-white shadow-sm transition hover:bg-blue-700 active:bg-blue-800 dark:bg-blue-500 dark:hover:bg-blue-400" %>
+    <% end %>
+    <p class="text-center text-xs text-zinc-400 dark:text-zinc-500">
+      Marking as read gives a small context boost to the kanji inside — it never reschedules your reviews.
+    </p>
+  <% else %>
+    <div class="rounded-2xl border border-zinc-200 bg-white p-8 text-center shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
+      <p class="text-sm text-zinc-500 dark:text-zinc-400">No sentences available right now.</p>
+      <%= link_to "Back to today", root_path, class: "mt-4 inline-block rounded-xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white" %>
+    </div>
+  <% end %>
+</div>
