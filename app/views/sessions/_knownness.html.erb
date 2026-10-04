@@ -1,0 +1,22 @@
+<%# Explicit spoken-word labeling for word-option questions (kana_to_kanji,
+    kanji_to_reading). Hidden until the learner picks an answer so it never
+    leaks; saved via fetch so the quiz frame is untouched. %>
+<div id="knownness-<%= word_id %>"
+     data-quiz-target="knownness"
+     data-controller="knownness"
+     data-knownness-word-id-value="<%= word_id %>"
+     class="hidden space-y-2 pt-2">
+  <p class="text-sm text-zinc-500 dark:text-zinc-400">Do you say this word?</p>
+  <div class="grid grid-cols-3 gap-2">
+    <% { "say" => "I say it", "known" => "Know it", "unknown" => "Don't know" }.each do |level, label| %>
+      <button type="button"
+              data-action="click->knownness#mark"
+              data-level="<%= level %>"
+              data-knownness-target="button"
+              class="min-h-12 rounded-xl border-2 border-zinc-300 bg-white px-2 py-2 text-sm font-semibold text-zinc-700 shadow-sm transition hover:bg-zinc-100 active:bg-zinc-200 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800 dark:active:bg-zinc-700">
+        <%= label %>
+      </button>
+    <% end %>
+  </div>
+  <p data-knownness-target="confirmation" class="hidden text-xs text-green-600 dark:text-green-400">Saved — this tunes what you learn next.</p>
+</div>

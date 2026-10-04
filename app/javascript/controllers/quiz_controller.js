@@ -1,7 +1,7 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static targets = ["option", "answer", "responseTime", "confidenceRow", "details"]
+  static targets = ["option", "answer", "responseTime", "confidenceRow", "details", "knownness"]
 
   connect() {
     this.presentedAt = Number(this.element.dataset.quizPresentedAt) || Date.now()
@@ -31,5 +31,6 @@ export default class extends Controller {
 
     this.confidenceRowTarget.classList.remove("hidden")
     if (this.hasDetailsTarget) this.detailsTarget.classList.remove("hidden")
+    if (this.hasKnownnessTarget) this.knownnessTarget.classList.remove("hidden")
   }
 }

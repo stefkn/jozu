@@ -8,7 +8,9 @@ attr_accessor :slow_ms, :sentence_slow_ms, :fast_ms, :mastery_deltas,
               :diagnostic_bands, :diagnostic_question_count, :confusion_min_count,
               :confusion_contrast_threshold, :graduation_min_interval,
               :leech_min_reviews, :leech_min_failure_rate, :leech_limit,
-              :forecast_days, :acquisition_burst_size, :acquisition_burst_types
+              :forecast_days, :acquisition_burst_size, :acquisition_burst_types,
+              :reading_context_bump, :reading_sentence_count,
+              :word_knownness_levels
 
     def initialize
       @slow_ms = 4_000
@@ -52,6 +54,13 @@ attr_accessor :slow_ms, :sentence_slow_ms, :fast_ms, :mastery_deltas,
       # is below the burst size (times_seen 1 -> kana_to_kanji, 2 -> sentence).
       @acquisition_burst_size = 3
       @acquisition_burst_types = { 1 => "kana_to_kanji", 2 => "sentence_to_kanji" }
+      # Minimal reading stream: sentences per passage + lightweight context bump
+      # applied to tracked kanji when a passage is marked as read (no SRS change).
+      @reading_context_bump = 0.05
+      @reading_sentence_count = 3
+      # Spoken-word knownness tap ("Do you say this word?"): explicit mastery
+      # assigned to the UserWord row. Feeds leverage + sentence comprehension.
+      @word_knownness_levels = { "say" => 1.0, "known" => 0.6, "unknown" => 0.1 }
     end
 
 def slow?(response_time_ms, question_type: nil)
