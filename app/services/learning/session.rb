@@ -24,9 +24,11 @@ module Learning
 
     def due_count(user)
       scheduler = Scheduler.new(config: @config)
-      kanji_due = user.user_kanji.count { |uk| scheduler.due?(uk, now: @now) && !NumberFilter.skip?(user, uk) }
+      kanji_due = user.user_kanji.select { |uk| scheduler.due?(uk, now: @now) && !NumberFilter.skip?(user, uk) }
       word_due = user.user_words.count { |uw| scheduler.due?(uw, now: @now) && !NumberFilter.skip?(user, uw) }
-      kanji_due + word_due
+      due_ids = kanji_due.map(&:id).to_set
+      burst_extra = AcquisitionBurst.new(config: @config).pending(user).count { |uk| !due_ids.include?(uk.id) }
+      kanji_due.size + word_due + burst_extra
     end
 
     def new_kanji_count(user)

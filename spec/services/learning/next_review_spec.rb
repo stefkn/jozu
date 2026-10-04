@@ -193,5 +193,51 @@ RSpec.describe Learning::NextReview do
 
       expect(described_class.call(user, now:)).not_to be_nil
     end
+
+    context "acquisition burst" do
+      it "serves kana_to_kanji right after the first meaning answer" do
+        uk = UserKanji.create!(user:, kanji: k["決"], times_seen: 1, last_seen_at: now,
+                               recognition_strength: 0.1, reading_strength: 0.1, context_strength: 0.1)
+        Learning::Scheduler.new.apply!(uk, grade: :good, now:)
+
+        question = described_class.call(user, now:)
+        expect(question).not_to be_nil
+        expect(question.reviewable_id).to eq(uk.id)
+        expect(question.question_type).to eq("kana_to_kanji")
+      end
+
+      it "serves sentence_to_kanji as the third burst step" do
+        uk = UserKanji.create!(user:, kanji: k["決"], times_seen: 2, last_seen_at: now,
+                               recognition_strength: 0.5, reading_strength: 0.5, context_strength: 0.1)
+        Learning::Scheduler.new.apply!(uk, grade: :good, now:)
+
+        question = described_class.call(user, now:)
+        expect(question).not_to be_nil
+        expect(question.reviewable_id).to eq(uk.id)
+        expect(question.question_type).to eq("sentence_to_kanji")
+      end
+
+      it "prefers burst follow-ups over older due reviews" do
+        burst = UserKanji.create!(user:, kanji: k["決"], times_seen: 1, last_seen_at: now)
+        Learning::Scheduler.new.apply!(burst, grade: :good, now:)
+        due = UserKanji.create!(user:, kanji: k["必"], times_seen: 3,
+                                recognition_strength: 0.1, reading_strength: 0.8, context_strength: 0.8)
+        Learning::Scheduler.new.apply!(due, grade: :again, now: now - 2.days)
+
+        question = described_class.call(user, now:)
+        expect(question.reviewable_id).to eq(burst.id)
+      end
+
+      it "ends the burst once times_seen reaches the burst size" do
+        uk = UserKanji.create!(user:, kanji: k["決"], times_seen: 3,
+                               recognition_strength: 0.1, reading_strength: 0.1, context_strength: 0.1)
+        Learning::Scheduler.new.apply!(uk, grade: :again, now: now - 1.hour)
+
+        question = described_class.call(user, now:)
+        # Burst is done; the item is served via the normal due path (weakest dimension).
+        expect(question.reviewable_id).to eq(uk.id)
+        expect(question.question_type).to eq("kana_to_kanji")
+      end
+    end
   end
 end

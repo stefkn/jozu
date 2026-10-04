@@ -1,9 +1,11 @@
 module Learning
   # Orchestrates "what to show next" (plan §8.1). One deterministic call:
   #
-  #   1. Reviews first: earliest due SRS item (user_kanji or user_word).
-  #   2. New kanji: highest-priority unseen kanji, capped per session.
-  #   3. Question type from the item's weakest dimension, constrained to the
+  #   1. Acquisition burst: a just-introduced kanji (times_seen < burst size)
+  #      gets its varied follow-up (kana, then sentence) ahead of the queue.
+  #   2. Reviews first: earliest due SRS item (user_kanji or user_word).
+  #   3. New kanji: highest-priority unseen kanji, capped per session.
+  #   4. Question type from the item's weakest dimension, constrained to the
   #      multiple-choice recognition/reading/context types.
   #
   # Daily sessions are bounded: once quiz reviews answered today reach
@@ -22,6 +24,9 @@ module Learning
     # @return [Learning::Question, nil] nil when the session is complete.
     def call(user)
       return nil if session_target_reached?(user)
+
+      burst = generate_burst(user)
+      return burst if burst
 
       reviewable = next_due(user)
       if reviewable
@@ -77,6 +82,24 @@ module Learning
 
       QuestionStore.put(question)
       question
+    end
+
+    def generate_burst(user)
+      burst_items = AcquisitionBurst.new(config: @config).pending(user)
+      burst_items.each do |item|
+        preferred = AcquisitionBurst.new(config: @config).burst_type(item.times_seen)
+        next if preferred.nil?
+
+        attempts = [ preferred, fallback_type(preferred) ].uniq
+        attempts.each do |type|
+          question = QuestionGenerator.new(now: @now).generate(user, item, question_type: type)
+          next if question.nil?
+
+          QuestionStore.put(question)
+          return question
+        end
+      end
+      nil
     end
 
     def generate_for(user)

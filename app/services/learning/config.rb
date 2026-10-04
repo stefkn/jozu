@@ -8,7 +8,7 @@ attr_accessor :slow_ms, :sentence_slow_ms, :fast_ms, :mastery_deltas,
               :diagnostic_bands, :diagnostic_question_count, :confusion_min_count,
               :confusion_contrast_threshold, :graduation_min_interval,
               :leech_min_reviews, :leech_min_failure_rate, :leech_limit,
-              :forecast_days
+              :forecast_days, :acquisition_burst_size, :acquisition_burst_types
 
     def initialize
       @slow_ms = 4_000
@@ -47,6 +47,11 @@ attr_accessor :slow_ms, :sentence_slow_ms, :fast_ms, :mastery_deltas,
       @leech_limit = 10
       # How many days (including today) the home-screen due forecast covers.
       @forecast_days = 7
+      # New-kanji acquisition burst: after the initial kanji_to_meaning question,
+      # the same kanji is served again for these follow-up types while times_seen
+      # is below the burst size (times_seen 1 -> kana_to_kanji, 2 -> sentence).
+      @acquisition_burst_size = 3
+      @acquisition_burst_types = { 1 => "kana_to_kanji", 2 => "sentence_to_kanji" }
     end
 
 def slow?(response_time_ms, question_type: nil)

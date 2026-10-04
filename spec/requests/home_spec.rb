@@ -22,7 +22,7 @@ it "shows a Start button when there is work to do" do
     end
 
   it "shows an empty state when nothing is due and all kanji are introduced" do
-      Kanji.find_each { |k| UserKanji.create!(user:, kanji: k, times_seen: 1) }
+      Kanji.find_each { |k| UserKanji.create!(user:, kanji: k, times_seen: 3) }
       get root_path
       expect(response.body).to include("Nothing due right now")
     end

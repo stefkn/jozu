@@ -25,11 +25,12 @@ RSpec.describe "Quiz session", type: :system do
       wait_until(frame_advances(token_before))
     end
 
-    # 4 = the stale un-answered kanji (resumed session) + 3 new kanji (daily cap).
-    expect(answered).to eq(4)
+    # Burst: each new kanji gets meaning + kana + sentence follow-ups, so the
+    # session runs to the daily review target (10) across 4 kanji (1 stale + 3 new).
+    expect(answered).to eq(10)
     expect(page).to have_content("Session complete", wait: 5)
-    expect(Review.count).to eq(4)
-    expect(UserKanji.where(times_seen: 1).count).to eq(4)
+    expect(Review.count).to eq(10)
+    expect(UserKanji.count).to eq(4)
 
     click_on "Done"
     expect(page).to have_content("Today's session")

@@ -29,8 +29,9 @@ RSpec.describe "Session end after answering", type: :request do
       break if token.nil?
     end
 
-    expect(answered).to eq(3)
-    expect(Review.count).to eq(3)
+    # Burst: 3 new kanji x (meaning + kana + sentence) follow-ups = 9 reviews.
+    expect(answered).to eq(9)
+    expect(Review.count).to eq(9)
     expect(response.body).to include("Session complete")
   end
 end
