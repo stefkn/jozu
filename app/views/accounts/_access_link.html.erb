@@ -1,0 +1,12 @@
+<section class="space-y-4 rounded-2xl border border-zinc-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-900" data-controller="access-link">
+  <h2 class="font-semibold">Your private access link</h2>
+  <p class="text-sm">Bookmark this link to return to your profile or open it on another device. Keep it private: anyone with it can view and change your progress.</p>
+  <label for="access-link" class="block text-sm font-medium">Access link</label>
+  <input id="access-link" type="text" readonly value="<%= access_url(access_token: current_user.access_token) %>" data-access-link-target="input" class="w-full rounded-lg border border-zinc-300 bg-transparent px-3 py-2 text-sm dark:border-zinc-600" onclick="this.select()">
+  <div class="flex flex-wrap gap-3">
+    <button type="button" data-action="access-link#copy" class="rounded-lg bg-blue-600 px-4 py-2 font-semibold text-white">Copy link</button>
+    <%= link_to "Open link to bookmark", access_path(access_token: current_user.access_token), data: { turbo: false }, class: "rounded-lg border border-zinc-300 px-4 py-2 dark:border-zinc-600" %>
+  </div>
+  <p role="status" aria-live="polite" data-access-link-target="status" class="text-sm"></p>
+  <p class="text-sm text-zinc-500 dark:text-zinc-400">Save the link before signing out or clearing browser data. Without it, there is no automatic recovery. You can find it again here while signed in.</p>
+</section>

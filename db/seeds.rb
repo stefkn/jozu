@@ -502,6 +502,8 @@ end
 
 end
 
-puts "Seeding demo user..."
-user = User.find_or_create_by!(id: 1)
+unless Rails.env.production?
+  puts "Seeding demo user..."
+  User.find_or_create_by!(id: 1)
+end
 puts "Done. #{Kanji.count} kanji, #{Word.count} words, #{Sentence.count} sentences."

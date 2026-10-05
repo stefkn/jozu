@@ -3,7 +3,7 @@ require "rails_helper"
 RSpec.describe "Diagnostic flow", type: :request do
   include CorpusHelper
 
-  before { build_corpus!; make_user }
+  before { build_corpus!; sign_in(make_user) }
 
   it "walks through the diagnostic flashcards and seeds user state" do
     Learning.config.diagnostic_question_count = 3

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ja" data-server-theme="<%= current_user&.theme || "system" %>">
+<html lang="ja" data-server-theme="<%= current_user&.theme || "system" %>" data-account-signed-in="<%= current_user.present? %>">
   <head>
     <title><%= content_for(:title) || "Jozu" %></title>
     <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -11,6 +11,8 @@
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
 
+    <meta name="turbo-cache-control" content="no-cache">
+
     <%= yield :head %>
 
     <%# Apply the saved theme before first paint to avoid a light flash. %>
@@ -18,7 +20,7 @@
       try {
         var stored = localStorage.getItem("jozu-theme");
         var server = document.documentElement.dataset.serverTheme || "system";
-        var theme = stored || server || "system";
+        var theme = server || stored || "system";
         var dark = theme === "dark" || (theme === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
         if (dark) {
           document.documentElement.classList.add("dark");
@@ -44,9 +46,11 @@
       <div class="mx-auto max-w-2xl px-4 py-3 flex items-center justify-between">
         <%= link_to "Jozu", root_path, class: "text-lg font-bold tracking-tight px-1 py-1" %>
         <div class="flex items-center gap-1 text-sm">
+          <% if current_user %>
           <%= link_to "Today", root_path, class: "rounded-lg px-3 py-2 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100" %>
           <%= link_to "Progress", progress_path, class: "rounded-lg px-3 py-2 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100" %>
           <%= link_to "Settings", settings_path, class: "rounded-lg px-3 py-2 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100" %>
+          <% end %>
           <button type="button"
                   data-action="click->theme#toggle"
                   aria-label="Toggle dark mode"
