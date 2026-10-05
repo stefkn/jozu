@@ -3,7 +3,7 @@ require "rails_helper"
 RSpec.describe "Settings", type: :request do
   include CorpusHelper
 
-  before { build_corpus!; make_user }
+  before { build_corpus!; sign_in(make_user) }
 
   it "renders the settings form" do
     get settings_path

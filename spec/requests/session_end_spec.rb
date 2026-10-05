@@ -3,7 +3,7 @@ require "rails_helper"
 RSpec.describe "Session end after answering", type: :request do
   include CorpusHelper
 
-  before { build_corpus!; make_user }
+  before { build_corpus!; sign_in(make_user) }
 
   it "completes after the quiz flow (POST-driven) runs out of new kanji" do
     get next_sessions_path

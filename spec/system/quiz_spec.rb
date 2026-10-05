@@ -11,7 +11,8 @@ RSpec.describe "Quiz session", type: :system do
   end
 
   it "completes a full session and updates progress" do
-    visit root_path
+    visit access_path(access_token: make_user.access_token)
+    click_on "Continue to my profile"
     expect(page).to have_content("Today's session")
     expect(page).not_to have_content("Take the diagnostic")
     click_on "Start"

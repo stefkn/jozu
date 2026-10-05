@@ -1,0 +1,10 @@
+<% content_for :title, "Open your profile — Jozu" %>
+<div class="space-y-6 rounded-2xl border border-zinc-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-900">
+  <h1 class="text-2xl font-bold">Your private profile link</h1>
+  <p>Bookmark this page now to keep access to this profile. You can use the same bookmark on another device.</p>
+  <p class="text-sm text-zinc-500 dark:text-zinc-400">Anyone with this link can view and change your progress. Keep it private.</p>
+  <% if current_user && current_user != @access_user %>
+    <p>This link opens a different profile. Continuing will switch this browser to that profile.</p>
+  <% end %>
+  <%= button_to "Continue to my profile", enter_access_path(access_token: @access_user.access_token), data: { turbo: false }, class: "w-full rounded-xl bg-blue-600 px-4 py-4 font-semibold text-white" %>
+</div>
