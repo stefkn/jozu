@@ -45,14 +45,21 @@ RSpec.describe "Quiz session", type: :system do
   end
 
   # Returns true once the frame is replaced by the next question or the
-  # session-complete card.
+  # session-complete card. Selenium can raise transient "node detached"
+  # errors when Chrome inspects a node Turbo swaps out mid-poll; treat
+  # those as "not advanced yet" and let the next poll decide.
   def frame_advances(previous_token)
     ->(_) {
-      return true if page.has_content?("Session complete")
+      content_done = begin
+        page.has_content?("Session complete")
+      rescue Selenium::WebDriver::Error::UnknownError
+        false
+      end
+      return true if content_done
 
       current = begin
         page.find("#question_token", visible: false).value
-      rescue Capybara::ElementNotFound
+      rescue Capybara::ElementNotFound, Selenium::WebDriver::Error::UnknownError
         return true
       end
       current != previous_token
