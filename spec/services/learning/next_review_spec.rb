@@ -19,7 +19,7 @@ RSpec.describe Learning::NextReview do
 
     it "stores the question for idempotent answer verification" do
       question = described_class.call(user, now:)
-      stored = Learning::QuestionStore.fetch(question.token)
+      stored = Learning::QuestionStore.fetch(question.token, user:)
       expect(stored).to eq(question)
     end
 

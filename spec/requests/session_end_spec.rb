@@ -12,7 +12,7 @@ RSpec.describe "Session end after answering", type: :request do
 
     answered = 0
     10.times do
-      question = Learning::QuestionStore.fetch(token)
+      question = Learning::QuestionStore.fetch(token, user: make_user)
       expect(question).not_to be_nil
 
       post reviews_path, params: {

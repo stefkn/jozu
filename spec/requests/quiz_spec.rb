@@ -15,7 +15,7 @@ RSpec.describe "Quiz flow", type: :request do
     token = body[/name="question_token"[^>]*value="([^"]+)"/, 1]
     expect(token).not_to be_nil
 
-    question = Learning::QuestionStore.fetch(token)
+    question = Learning::QuestionStore.fetch(token, user: make_user)
     correct_answer = question.correct_option_id
 
     expect do
@@ -44,7 +44,7 @@ RSpec.describe "Quiz flow", type: :request do
   it "records the mastery update on the review row" do
     get next_sessions_path
     token = response.body[/name="question_token"[^>]*value="([^"]+)"/, 1]
-    question = Learning::QuestionStore.fetch(token)
+    question = Learning::QuestionStore.fetch(token, user: make_user)
 
     post reviews_path, params: {
       question_token: token,
@@ -63,7 +63,7 @@ RSpec.describe "Quiz flow", type: :request do
   it "is idempotent for a double-submitted token" do
     get next_sessions_path
     token = response.body[/name="question_token"[^>]*value="([^"]+)"/, 1]
-    question = Learning::QuestionStore.fetch(token)
+    question = Learning::QuestionStore.fetch(token, user: make_user)
 
     params = {
       question_token: token,
@@ -83,7 +83,7 @@ RSpec.describe "Quiz flow", type: :request do
   it "rejects a tampered answer" do
     get next_sessions_path
     token = response.body[/name="question_token"[^>]*value="([^"]+)"/, 1]
-    question = Learning::QuestionStore.fetch(token)
+    question = Learning::QuestionStore.fetch(token, user: make_user)
     wrong_answer = question.options.keys.find { |id| id != question.correct_option_id }
     expect(wrong_answer).not_to be_nil
 
@@ -107,7 +107,7 @@ RSpec.describe "Quiz flow", type: :request do
     uk = UserKanji.create!(user:, kanji: k["決"], times_seen: 1, context_strength: 0.0, recognition_strength: 0.6)
     question = Learning::QuestionGenerator.new.generate(user, uk, question_type: "sentence_to_kanji")
     expect(question.sentence_id).not_to be_nil
-    Learning::QuestionStore.put(question)
+    Learning::QuestionStore.put(question, user: make_user)
 
     expect do
       post reviews_path, params: {
