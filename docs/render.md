@@ -104,7 +104,9 @@ history, so store them privately and keep them out of Git.
 
 Rails filters the UUID in request paths and parameters. Account pages use
 `Cache-Control: private, no-store`, Turbo snapshot caching is disabled, and
-`Referrer-Policy: no-referrer` prevents links leaking via referrers. Mutations use
+`Referrer-Policy: strict-origin` sends only the origin (scheme, host, and port),
+never the UUID path, while preserving the Origin header Rails verifies on form
+submissions. Mutations use
 Rails CSRF protection, including the POST that enters a profile. Account creation
 is limited to five profiles per IP per hour using the shared production cache.
 

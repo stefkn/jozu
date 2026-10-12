@@ -21,7 +21,8 @@ class ApplicationController < ActionController::Base
 
   def protect_account_response
     response.headers["Cache-Control"] = "private, no-store"
-    response.headers["Referrer-Policy"] = "no-referrer"
+    # Keep UUID paths out of referrers without making form POST origins null.
+    response.headers["Referrer-Policy"] = "strict-origin"
     response.headers["X-Robots-Tag"] = "noindex, nofollow"
   end
 end

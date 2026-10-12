@@ -15,7 +15,7 @@ RSpec.describe "Access-link accounts", type: :request do
     get welcome_path
     expect(response.body).to include("Create my learning profile")
     expect(response.headers["Cache-Control"]).to include("no-store")
-    expect(response.headers["Referrer-Policy"]).to eq("no-referrer")
+    expect(response.headers["Referrer-Policy"]).to eq("strict-origin")
     expect(response.headers["X-Robots-Tag"]).to eq("noindex, nofollow")
     post reviews_path, params: { question_token: "missing" }
     expect(response).to have_http_status(:unauthorized)
@@ -94,14 +94,23 @@ RSpec.describe "Access-link accounts", type: :request do
 
   it "requires CSRF tokens to create and enter profiles" do
     original = ActionController::Base.allow_forgery_protection
+    original_origin_check = ActionController::Base.forgery_protection_origin_check
     begin
       ActionController::Base.allow_forgery_protection = true
+      ActionController::Base.forgery_protection_origin_check = true
       get welcome_path
       expect { post account_path }.not_to change(User, :count)
       expect(response).to have_http_status(:unprocessable_content)
       get welcome_path
       csrf = Nokogiri::HTML(response.body).at_css('meta[name="csrf-token"]')["content"]
-      post account_path, params: { authenticity_token: csrf }
+      origin = request.base_url
+      [ "null", "https://untrusted.example" ].each do |invalid_origin|
+        expect do
+          post account_path, params: { authenticity_token: csrf }, headers: { "Origin" => invalid_origin }
+        end.not_to change(User, :count)
+        expect(response).to have_http_status(:unprocessable_content)
+      end
+      post account_path, params: { authenticity_token: csrf }, headers: { "Origin" => origin }
       expect(response).to have_http_status(:see_other)
       user = User.last
       post enter_access_path(access_token: user.access_token)
@@ -112,6 +121,7 @@ RSpec.describe "Access-link accounts", type: :request do
       expect(response).to redirect_to(root_path)
     ensure
       ActionController::Base.allow_forgery_protection = original
+      ActionController::Base.forgery_protection_origin_check = original_origin_check
     end
   end
 

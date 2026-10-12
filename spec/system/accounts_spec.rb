@@ -3,6 +3,19 @@ require "rails_helper"
 RSpec.describe "Access-link profile on mobile", type: :system do
   include CorpusHelper
 
+  around do |example|
+    original_protection = ActionController::Base.allow_forgery_protection
+    original_origin_check = ActionController::Base.forgery_protection_origin_check
+    begin
+      ActionController::Base.allow_forgery_protection = true
+      ActionController::Base.forgery_protection_origin_check = true
+      example.run
+    ensure
+      ActionController::Base.allow_forgery_protection = original_protection
+      ActionController::Base.forgery_protection_origin_check = original_origin_check
+    end
+  end
+
   before { build_corpus! }
 
   it "creates a profile, saves its link and restores it after signing out" do
