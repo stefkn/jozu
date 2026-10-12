@@ -1,5 +1,9 @@
 Rails.application.routes.draw do
   root "home#index"
+  get "welcome", to: "accounts#new", as: :welcome
+  resource :account, only: %i[create show destroy]
+  get "access/:access_token", to: "accounts#access", as: :access
+  post "access/:access_token", to: "accounts#enter", as: :enter_access
 
   resources :sessions, only: [] do
     collection do

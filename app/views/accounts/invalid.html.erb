@@ -1,0 +1,6 @@
+<% content_for :title, "Invalid access link — Jozu" %>
+<div class="space-y-4">
+  <h1 class="text-2xl font-bold">This access link isn’t valid</h1>
+  <p>Check that you copied the entire link, or open your original bookmark.</p>
+  <%= link_to "Continue", current_user ? root_path : welcome_path, class: "text-blue-600 dark:text-blue-400" %>
+</div>

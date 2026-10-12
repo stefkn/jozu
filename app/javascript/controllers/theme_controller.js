@@ -1,7 +1,7 @@
 import { Controller } from "@hotwired/stimulus"
 
 // Header dark-mode toggle + Settings theme radios share this controller.
-// Theme resolution order: localStorage ("jozu-theme") > server default
+// Theme resolution order: server default > localStorage ("jozu-theme")
 // (<html data-server-theme>) > "system". The `dark` class lives on
 // <html> (see @custom-variant in application.css). Choices persist to
 // localStorage immediately and sync to User#settings via PATCH /settings
@@ -38,8 +38,8 @@ export default class extends Controller {
   currentTheme() {
     try {
       return (
-        localStorage.getItem("jozu-theme") ||
         document.documentElement.dataset.serverTheme ||
+        localStorage.getItem("jozu-theme") ||
         "system"
       )
     } catch {
@@ -68,13 +68,14 @@ export default class extends Controller {
     } catch {
       // private mode etc. — server sync still applies for this session
     }
+    document.documentElement.dataset.serverTheme = theme
     this.render(theme)
     this.syncServer(theme)
   }
 
   syncServer(theme) {
     const token = document.querySelector('meta[name="csrf-token"]')?.content
-    if (!token) return
+    if (!token || document.documentElement.dataset.accountSignedIn !== "true") return
     // Theme-only sync: the server leaves skip_number_kanji/practice_mode
     // untouched (see SettingsController#update). The full form submit on
     // Save persists everything together.

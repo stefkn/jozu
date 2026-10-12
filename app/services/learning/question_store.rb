@@ -1,24 +1,23 @@
 module Learning
-  # Keeps issued questions available for answer verification and idempotency.
-  # Backed by the Rails cache with a short TTL — the quiz is stateless otherwise.
+  # Issued questions are private to the learner, including diagnostic flashcards.
   class QuestionStore
     TTL = 24.hours
-    KEY_PREFIX = "jozu:question"
+    KEY_PREFIX = "jozu:question:v2"
 
-    def self.put(question)
-      Rails.cache.write(key(question.token), question, expires_in: TTL)
+    def self.put(question, user:)
+      Rails.cache.write(key(question.token, user:), question, expires_in: TTL)
     end
 
-    def self.fetch(token)
-      Rails.cache.read(key(token))
+    def self.fetch(token, user:)
+      Rails.cache.read(key(token, user:))
     end
 
-    def self.delete(token)
-      Rails.cache.delete(key(token))
+    def self.delete(token, user:)
+      Rails.cache.delete(key(token, user:))
     end
 
-    def self.key(token)
-      "#{KEY_PREFIX}:#{token}"
+    def self.key(token, user:)
+      "#{KEY_PREFIX}:#{user.id}:#{token}"
     end
   end
 end

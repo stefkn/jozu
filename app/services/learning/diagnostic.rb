@@ -19,7 +19,7 @@ module Learning
     end
 
     def self.state_for(user, config: Learning.config)
-      Rails.cache.fetch(state_key(user)) { new_state(config) }
+      Rails.cache.fetch(state_key(user), expires_in: 24.hours) { new_state(config) }
     end
 
     def self.new_state(config)
@@ -43,7 +43,7 @@ module Learning
       @config = config
     end
 
-def start(user)
+    def start(user)
       state = self.class.state_for(user, config: @config)
       return nil if state.finished?
 
@@ -63,7 +63,7 @@ def start(user)
         answers: state.answers + [ Answer.new(word_id:, correct:) ],
         used_ids: state.used_ids + [ word_id ]
       )
-      Rails.cache.write(self.class.state_key(user), state)
+      Rails.cache.write(self.class.state_key(user), state, expires_in: 24.hours)
       self.class.finish!(user, now: @now, config: @config) if state.finished?
       state.finished? ? nil : question_for(user, state)
     end
@@ -83,7 +83,7 @@ def start(user)
 
       flashcard = Flashcard.new(token: SecureRandom.uuid, word_id: word.id,
                                 front: word.surface, back: word.reading)
-      QuestionStore.put(flashcard)
+      QuestionStore.put(flashcard, user:)
       flashcard
     end
 

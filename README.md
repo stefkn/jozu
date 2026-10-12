@@ -20,8 +20,14 @@ bin/rails db:seed              # demo user (curated corpus only seeds an empty D
 bin/rails server
 ```
 
-Then open http://localhost:3000. On first launch the app runs a short diagnostic
-to estimate what you already know, then presents daily quiz sessions.
+Then open http://localhost:3000 and create a learning profile. Save its private
+access link to use the same profile on another device. Each profile starts with a
+short diagnostic, followed by daily quiz sessions. For the existing seeded local
+profile, run `USER_ID=1 bin/rails jozu:access_link` and open the printed link.
+
+See [Render deployment and database transfer](docs/render.md) for the included
+free-tier hosting setup, manual backups, and preserving your current progress.
+The free Render PostgreSQL database expires after 30 days.
 
 ## Data pipeline
 

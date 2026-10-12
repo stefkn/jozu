@@ -1,4 +1,8 @@
 class User < ApplicationRecord
+  before_validation :assign_access_token, on: :create
+  validates :access_token, presence: true, uniqueness: true,
+                           format: { with: /\A[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\z/ }
+
   THEMES = %w[system light dark].freeze
   has_many :user_kanji, dependent: :destroy
   has_many :kanji, through: :user_kanji
@@ -29,5 +33,10 @@ class User < ApplicationRecord
 
   def set_setting(key, value)
     update!(settings: (settings || {}).merge(key.to_s => value))
+  end
+  private
+
+  def assign_access_token
+    self.access_token ||= SecureRandom.uuid
   end
 end

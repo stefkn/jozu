@@ -1,0 +1,31 @@
+services:
+  - type: web
+    name: jozu
+    runtime: ruby
+    plan: free
+    region: frankfurt
+    buildCommand: bash bin/render-build.sh
+    startCommand: bundle exec puma -C config/puma.rb
+    healthCheckPath: /up
+    envVars:
+      - key: RAILS_ENV
+        value: production
+      - key: RAILS_MASTER_KEY
+        sync: false
+      - key: DATABASE_URL
+        fromDatabase:
+          name: jozu-db
+          property: connectionString
+      - key: WEB_CONCURRENCY
+        value: "0"
+      - key: RAILS_MAX_THREADS
+        value: "3"
+      - key: RAILS_LOG_LEVEL
+        value: info
+
+databases:
+  - name: jozu-db
+    plan: free
+    region: frankfurt
+    databaseName: jozu
+    user: jozu

@@ -80,7 +80,7 @@ module Learning
       question = QuestionGenerator.new(now: @now).generate(user, reviewable, question_type:)
       return nil if question.nil?
 
-      QuestionStore.put(question)
+      QuestionStore.put(question, user:)
       question
     end
 
@@ -95,7 +95,7 @@ module Learning
           question = QuestionGenerator.new(now: @now).generate(user, item, question_type: type)
           next if question.nil?
 
-          QuestionStore.put(question)
+          QuestionStore.put(question, user:)
           return question
         end
       end
@@ -114,7 +114,7 @@ module Learning
           question = QuestionGenerator.new(now: @now).generate(user, item, question_type: type)
           next if question.nil?
 
-          QuestionStore.put(question)
+          QuestionStore.put(question, user:)
           return question
         end
       end

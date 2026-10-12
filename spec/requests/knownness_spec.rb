@@ -3,7 +3,7 @@ require "rails_helper"
 RSpec.describe "Knownness", type: :request do
   include CorpusHelper
 
-  before { build_corpus!; make_user }
+  before { build_corpus!; sign_in(make_user) }
 
   let(:user) { User.first }
   let(:word) { Word.find_by(surface: "決める") }

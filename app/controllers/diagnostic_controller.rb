@@ -5,23 +5,24 @@ class DiagnosticController < ApplicationController
   end
 
   def answer
-    item = Learning::QuestionStore.fetch(params[:question_token])
-    if item.nil? || !item.is_a?(Learning::Flashcard)
-      @flashcard = nil
-      render_quiz
-      return
-    end
+    current_user.with_lock do
+      item = Learning::QuestionStore.fetch(params[:question_token], user: current_user)
+      if item.nil? || !item.is_a?(Learning::Flashcard)
+        head :unprocessable_content
+        return
+      end
 
-    word = Word.find_by(id: item.word_id)
-    if word.nil?
-      @flashcard = nil
-      render_quiz
-      return
-    end
+      word = Word.find_by(id: item.word_id)
+      if word.nil?
+        head :unprocessable_content
+        return
+      end
 
-    correct, confidence = map_self_assessment(params[:knew])
-    @flashcard = Learning::Diagnostic.answer(current_user, word_id: word.id, correct:,
-                                                            confidence:)
+      Learning::QuestionStore.delete(item.token, user: current_user)
+      correct, confidence = map_self_assessment(params[:knew])
+      @flashcard = Learning::Diagnostic.answer(current_user, word_id: word.id, correct:,
+                                                              confidence:)
+    end
     render_quiz
   end
 
